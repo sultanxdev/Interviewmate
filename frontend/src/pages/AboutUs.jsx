@@ -165,76 +165,7 @@ function AboutUs() {
         </div>
       </motion.section>
 
-      {/* Leadership */}
-      <motion.section
-        className="py-20 bg-gradient-to-br from-slate-900 to-slate-900/50"
-      >
-        <div className="max-w-6xl mx-auto px-4">
-          <h2 className="text-3xl font-bold text-slate-100 text-center mb-12">
-            Meet The Founders
-          </h2>
-          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-            {[ 
-              {
-                name: "Sultan Alam",
-                role: "Co-Founder & CEO",
-                description: "AI enthusiast focused on transforming career development through intelligent systems",
-                social: {
-                  linkedin: "https://linkedin.com/in/sultan-alam436",
-                  portfolio: "https://sultan-alam.netlify.app"
-                }
-              },
-              {
-                name: "Sofiya Parveen",
-                role: "Co-Founder & CTO",
-                description: "Expert in conversational AI and natural language processing systems",
-                social: {
-                  linkedin: "https://linkedin.com/in/sofiyaparveen",
-                  portfolio: "https://sofiyaparveen.netlify.app"
-                }
-              }
-            ].map((member, index) => (
-              <motion.div
-                key={index}
-                className="bg-slate-800/50 p-6 rounded-xl border border-slate-700 backdrop-blur-lg hover:border-[#7F6FEA]/30"
-                whileHover={{ y: -10 }}
-              >
-                <div className="flex flex-col items-center">
-                  <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#F5793B] to-[#7F6FEA] mb-4 flex items-center justify-center">
-                    <span className="text-2xl font-bold text-white">
-                      {member.name[0]}
-                    </span>
-                  </div>
-                  <h3 className="text-xl font-bold text-slate-100 mb-2">
-                    {member.name}
-                  </h3>
-                  <p className="bg-gradient-to-r from-[#F5793B] to-[#7F6FEA] bg-clip-text text-transparent font-medium mb-3">
-                    {member.role}
-                  </p>
-                  <p className="text-slate-400 text-sm text-center mb-4">
-                    {member.description}
-                  </p>
-                  <div className="flex gap-3">
-                    {Object.entries(member.social).map(([key, value]) => (
-                      <motion.a
-                        key={key}
-                        href={value}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        whileHover={{ scale: 1.2 }}
-                        className="text-slate-400 hover:text-[#7F6FEA] transition-colors"
-                      >
-                        {key === 'linkedin' && <Linkedin className="w-5 h-5" />}
-                        {key === 'portfolio' && <Globe className="w-5 h-5" />}
-                      </motion.a>
-                    ))}
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </motion.section>
+   
 
       {/* CTA */}
       <motion.section
