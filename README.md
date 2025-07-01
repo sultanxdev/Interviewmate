@@ -1,12 +1,12 @@
-# 🧠 InterviewMate.pro – AI Mock Interview Platform  
+# 🧠 Interviewmate – AI Mock Interview Platform  
 
-🚀 **InterviewMate.pro** is an advanced **AI-powered mock interview platform** designed to help job seekers practice and prepare for technical and behavioral interviews. Built using the **MERN stack**, it features real-time voice interactions powered by **Vapi AI**, secure authentication, and a clean user interface to simulate real interview scenarios effectively.
+🚀 **Interviewmate** is an advanced **AI-powered mock interview platform** designed to help job seekers practice and prepare for technical and behavioral interviews. Built using the **MERN stack**, it features real-time voice interactions powered by **Web Speech api**, secure authentication, and a clean user interface to simulate real interview scenarios effectively.
 
 ---
 
 ## 🌟 Key Features  
 
-✅ **AI-Driven Mock Interviews** – Practice interviews with real-time AI-based voice interactions powered by **Vapi AI** 🤖🎙️  
+✅ **AI-Driven Mock Interviews** – Practice interviews with real-time AI-based voice interactions powered by **web speech api** 🤖🎙️  
 ✅ **Voice & Video Interaction** – Engage in immersive mock interviews with AI, replicating real-world scenarios 🎤🖥️  
 ✅ **Personalized Feedback** – Receive structured performance insights after each interview 📊📝  
 ✅ **Secure Role-Based Access** – JWT-based authentication for Candidates and Admins 🔐👤  
@@ -30,7 +30,7 @@
 - **Frontend:** React.js, Tailwind CSS  
 - **Backend:** Node.js, Express.js  
 - **Database:** MongoDB Atlas  
-- **AI Voice API:** Vapi AI  
+- **Voice:** web speech api  
 - **Authentication:** JWT 
 - **Deployment:** Vercel (Frontend), Render/ (Backend)  
 
@@ -38,7 +38,7 @@
 
 ## 🚀 Live Demo  
 
-🔗 **[Try it now → interviewmate.pro](https://interviewmate-mu.vercel.app/)**
+🔗 **[Try it now → Interviewmate](https://interviewmate-mu.vercel.app/)**
 
 ---
 
