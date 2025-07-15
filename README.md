@@ -1,45 +1,61 @@
-# 🧠 Interviewmate – AI Mock Interview Platform  
+# 💼 InterviewMate.dev – AI Mock Interview Platform
 
-🚀 **Interviewmate** is an advanced **AI-powered mock interview platform** designed to help job seekers practice and prepare for technical and behavioral interviews. Built using the **MERN stack**, it features real-time voice interactions powered by **Web Speech api**, secure authentication, and a clean user interface to simulate real interview scenarios effectively.
-
----
-
-## 🌟 Key Features  
-
-✅ **AI-Driven Mock Interviews** – Practice interviews with real-time AI-based voice interactions powered by **web speech api** 🤖🎙️  
-✅ **Voice & Video Interaction** – Engage in immersive mock interviews with AI, replicating real-world scenarios 🎤🖥️  
-✅ **Personalized Feedback** – Receive structured performance insights after each interview 📊📝  
-✅ **Secure Role-Based Access** – JWT-based authentication for Candidates and Admins 🔐👤  
-✅ **Interview History & Tracking** – Track your progress and revisit past interviews 📂📈  
-✅ **Clean & Responsive UI** – Developed using **React.js** and **Tailwind CSS** for a seamless experience 💻✨  
+> 🚧 **Currently in Development** – MVP coming soon!  
+> 🎯 *AI-powered platform to simulate realistic mock interviews and give actionable feedback for job seekers.*
 
 ---
 
-## 🎯 Benefits & Impact  
+## 🧠 What is InterviewMate?
 
-🎯 **Boosts Interview Confidence** – Realistic simulations improve preparation and reduce anxiety 💪🎯  
-🎯 **24/7 AI Practice Partner** – No need to wait for human mock interviews – practice anytime ⏱️🤖  
-🎯 **Personal Growth Insights** – Detailed feedback helps users reflect and improve 📈📋  
-🎯 **Easy Access** – Web-based platform, accessible from anywhere 🌐📱  
-🎯 **Safe & Private** – Your data is secure with authentication and access control 🔐🔒  
+**InterviewMate.dev** is an AI-driven SaaS platform that helps users practice real-time mock interviews for roles like SDE, PM, Data Analyst, and more. Powered by Vapi AI and GPT-4o, it simulates interviewer conversations, evaluates responses, and generates a feedback report with improvement suggestions.
 
 ---
 
-## 🛠️ Tech Stack  
+## ✨ Key Features (Planned)
 
-- **Frontend:** React.js, Tailwind CSS  
-- **Backend:** Node.js, Express.js  
-- **Database:** MongoDB Atlas  
-- **Voice:** web speech api  
-- **Authentication:** JWT 
-- **Deployment:** Vercel (Frontend), Render/ (Backend)  
-
----
-
-## 🚀 Live Demo  
-
-🔗 **[Try it now → Interviewmate](https://interviewmate-mu.vercel.app/)**
+- 🎤 **AI Mock Interviews** – Simulate voice-based technical and HR interview rounds  
+- 🧠 **Role-Based Question Bank** – Interview formats tailored to role (e.g., SDE, PM, Analyst)  
+- 📊 **Instant Feedback Report** – AI evaluates communication, correctness, and confidence  
+- 📄 **Transcript Summary** – View detailed Q&A transcript after session  
+- 📈 **Progress Tracker** – See improvement over multiple interviews  
+- 🔐 **Secure Dashboard** – User-based history & reports
 
 ---
 
-🚀 **Empowering Interview Preparation with AI!**  
+## 🚀 Tech Stack
+
+| Layer       | Technology                         |
+|-------------|------------------------------------|
+| Frontend    | React.js + Tailwind CSS            |
+| Backend     | Node.js + Express (or Next.js API) |
+| Database    | MongoDB Atlas                      |
+| AI Engine   | GPT-4o (OpenAI) + Vapi AI          |
+| Auth        | JWT + OAuth (Planned)              |
+| Voice SDK   | Vapi.ai SDK                        |
+| Deployment  | Vercel (Frontend) + Render (Backend) |
+
+---
+
+## 📸 UI Sneak Peek
+
+*Coming soon...*
+
+---
+
+## 🤝 Contributing
+
+This is a solo dev project, but feedback, ideas, and contributors are welcome!  
+Open issues or drop a star ⭐ to support InterviewMate.dev.
+
+---
+
+## 📬 Contact
+
+Made with 🧠 by [Sultan Alam](https://www.linkedin.com/in/sultan-alam436/)  
+📧 sultancodess@gmail.com
+
+---
+
+## 📄 License
+
+This project is under the [MIT License](LICENSE).
