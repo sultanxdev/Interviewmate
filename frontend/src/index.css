@@ -1,26 +1,17 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
-@import "tailwindcss";
-@plugin 'tailwind-scrollbar';
-@layer base {
-  html, body {
-    font-family: "Inter", sans-serif;
-  }
-}
-@keyframes underline {
-  0% { transform: scaleX(0) }
-  100% { transform: scaleX(1) }
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  margin: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-@keyframes typewriter {
-  from { width: 0 }
-  to { width: 100% }
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
 }
-
-.animate-underline {
-  animation: underline 1.5s ease-out forwards;
-}
-
-.animate-typewriter {
-  animation: typewriter 1s steps(20) forwards;
-}
-
