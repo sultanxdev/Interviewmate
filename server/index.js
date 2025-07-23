@@ -36,8 +36,8 @@ app.use(express.urlencoded({ extended: true }));
 
 // MongoDB connection
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/interviewmate')
-  .then(() => console.log('Connected to MongoDB'))
-  .catch(err => console.error('MongoDB connection error:', err));
+  .then(() => console.log('Server Connected to MongoDB'))
+  .catch(err => console.error('MongoDB connection errors:', err));
 
 // Routes
 app.use('/api/auth', authRoutes);
