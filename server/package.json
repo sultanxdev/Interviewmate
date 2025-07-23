@@ -2,8 +2,11 @@
   "name": "interviewmate-server",
   "version": "1.0.0",
   "description": "Backend API for InterviewMate",
-  "main": "index.js",
+  "main": "server/index.js",
   "type": "module",
+
+  "main": "src/index.js",
+
   "scripts": {
     "dev": "nodemon index.js",
     "start": "node index.js"
