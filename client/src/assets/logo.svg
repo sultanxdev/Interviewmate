@@ -1,0 +1,18 @@
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#9333ea;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#7c3aed;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Outer circle -->
+  <circle cx="100" cy="100" r="90" fill="url(#logoGradient)" />
+  
+  <!-- Inner speech bubble shape -->
+  <path d="M100 40 C140 40 170 70 170 110 C170 150 140 180 100 180 L80 180 L70 200 L80 180 C60 180 30 150 30 110 C30 70 60 40 100 40 Z" fill="#000000" />
+  
+  <!-- Heart shape inside -->
+  <path d="M100 90 C90 80 75 80 75 95 C75 110 100 130 100 130 C100 130 125 110 125 95 C125 80 110 80 100 90 Z" fill="url(#logoGradient)" />
+</svg>
