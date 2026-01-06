@@ -1,3 +1,7 @@
+import fs from 'fs'
+import path from 'path'
+import pdf from 'pdf-parse'
+import mammoth from 'mammoth'
 import geminiService from '../config/gemini.js'
 
 class ResumeParser {
@@ -8,21 +12,18 @@ class ResumeParser {
   // Parse resume and extract structured data
   async parseResume(filePath, fileName) {
     try {
-      // For now, we'll use a simple text extraction approach
-      // In production, you'd use libraries like pdf-parse, mammoth, etc.
-      
-      const fileExtension = fileName.toLowerCase().split('.').pop()
-      
-      if (!this.supportedFormats.includes(`.${fileExtension}`)) {
+      const fileExtension = fileName.toLowerCase().slice(fileName.lastIndexOf('.'))
+
+      if (!this.supportedFormats.includes(fileExtension)) {
         throw new Error(`Unsupported file format: ${fileExtension}`)
       }
 
-      // Extract text from file (simplified - you'd use proper parsers)
+      // Extract text from file
       const extractedText = await this.extractTextFromFile(filePath, fileExtension)
-      
+
       // Use Gemini AI to parse and structure the resume data
       const structuredData = await this.parseWithAI(extractedText)
-      
+
       return {
         success: true,
         data: structuredData,
@@ -40,22 +41,23 @@ class ResumeParser {
 
   // Extract text from different file formats
   async extractTextFromFile(filePath, extension) {
-    // This is a simplified implementation
-    // In production, use proper libraries:
-    // - pdf-parse for PDF files
-    // - mammoth for DOCX files
-    // - fs.readFileSync for TXT files
-    
     try {
-      const fs = await import('fs')
-      
-      if (extension === 'txt') {
+      if (extension === '.txt') {
         return fs.readFileSync(filePath, 'utf8')
       }
-      
-      // For PDF/DOC files, return placeholder text
-      // In production, implement proper parsing
-      return `Resume content from ${filePath} - implement proper parsing for ${extension} files`
+
+      if (extension === '.pdf') {
+        const dataBuffer = fs.readFileSync(filePath)
+        const data = await pdf(dataBuffer)
+        return data.text
+      }
+
+      if (extension === '.docx' || extension === '.doc') {
+        const result = await mammoth.extractRawText({ path: filePath })
+        return result.value
+      }
+
+      throw new Error(`Unsupported file format for text extraction: ${extension}`)
     } catch (error) {
       throw new Error(`Failed to extract text from ${extension} file: ${error.message}`)
     }
@@ -119,7 +121,7 @@ Return ONLY the JSON object, no additional text.
 `
 
       const response = await geminiService.generateContent(prompt)
-      
+
       if (response && response.text) {
         // Try to parse the JSON response
         const jsonMatch = response.text.match(/\{[\s\S]*\}/)
@@ -128,7 +130,7 @@ Return ONLY the JSON object, no additional text.
           return this.validateAndCleanData(parsedData)
         }
       }
-      
+
       throw new Error('Failed to parse AI response')
     } catch (error) {
       console.error('AI parsing error:', error)
@@ -211,7 +213,7 @@ Return ONLY the JSON object, no additional text.
         ...resumeData.skills.tools
       ].join(', ')
 
-      const experience = resumeData.experience.map(exp => 
+      const experience = resumeData.experience.map(exp =>
         `${exp.title} at ${exp.company}`
       ).join(', ')
 
@@ -233,14 +235,14 @@ Return as JSON array: [{"question": "...", "focus": "skill/experience area"}]
 `
 
       const response = await geminiService.generateContent(prompt)
-      
+
       if (response && response.text) {
         const jsonMatch = response.text.match(/\[[\s\S]*\]/)
         if (jsonMatch) {
           return JSON.parse(jsonMatch[0])
         }
       }
-      
+
       return this.getFallbackQuestions(interviewType)
     } catch (error) {
       console.error('Question generation error:', error)
