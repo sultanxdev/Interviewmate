@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import Logo from '../components/Logo'
 import GoogleOAuthButton from '../components/GoogleOAuthButton'
@@ -19,9 +19,17 @@ const RegisterPage = () => {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [loading, setLoading] = useState(false)
-  
+
   const { register } = useAuth()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+
+  React.useEffect(() => {
+    const role = searchParams.get('role')
+    if (role) {
+      sessionStorage.setItem('targetRole', role)
+    }
+  }, [searchParams])
 
   const handleChange = (e) => {
     setFormData({
@@ -35,35 +43,35 @@ const RegisterPage = () => {
       toast.error('Name is required')
       return false
     }
-    
+
     if (!formData.email.trim()) {
       toast.error('Email is required')
       return false
     }
-    
+
     if (formData.password.length < 6) {
       toast.error('Password must be at least 6 characters')
       return false
     }
-    
+
     if (formData.password !== formData.confirmPassword) {
       toast.error('Passwords do not match')
       return false
     }
-    
+
     return true
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    
+
     if (!validateForm()) return
-    
+
     setLoading(true)
 
     try {
       const result = await register(formData.name, formData.email, formData.password)
-      
+
       if (result.success) {
         navigate('/dashboard')
       } else {
@@ -170,11 +178,10 @@ const RegisterPage = () => {
                   <div className="flex items-center space-x-2">
                     <div className="flex-1 bg-gray-200 rounded-full h-2">
                       <div
-                        className={`h-2 rounded-full transition-all duration-300 ${
-                          passwordStrength.strength === 1 ? 'bg-red-500 w-1/3' :
-                          passwordStrength.strength === 2 ? 'bg-yellow-500 w-2/3' :
-                          passwordStrength.strength === 3 ? 'bg-green-500 w-full' : 'w-0'
-                        }`}
+                        className={`h-2 rounded-full transition-all duration-300 ${passwordStrength.strength === 1 ? 'bg-red-500 w-1/3' :
+                            passwordStrength.strength === 2 ? 'bg-yellow-500 w-2/3' :
+                              passwordStrength.strength === 3 ? 'bg-green-500 w-full' : 'w-0'
+                          }`}
                       />
                     </div>
                     <span className={`text-xs font-medium ${passwordStrength.color}`}>
@@ -275,7 +282,7 @@ const RegisterPage = () => {
 
             {/* Social Login Buttons */}
             <div className="mt-6 grid grid-cols-1 gap-3">
-              <GoogleOAuthButton 
+              <GoogleOAuthButton
                 text="Sign up with Google"
                 onSuccess={() => navigate('/dashboard')}
                 onError={(error) => console.error('Google signup error:', error)}

@@ -190,7 +190,7 @@ const LandingPage = () => {
 
       {/* Hero Section */}
       <section className="bg-gradient-to-br from-blue-50 via-white to-purple-50 py-20">
-        
+
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <div className="mb-8">
@@ -212,22 +212,35 @@ const LandingPage = () => {
               questioning, instant feedback, and professional reports to ace
               your next interview.
             </p>
-            
+
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-              <Link
-                to="/register"
-                className="inline-flex items-center px-8 py-4 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors shadow-lg"
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const role = e.target.role.value;
+                  if (role.trim()) {
+                    window.location.href = `/register?role=${encodeURIComponent(role)}`;
+                  }
+                }}
+                className="flex flex-col sm:flex-row gap-4 w-full max-w-lg mx-auto"
               >
-                <Play className="mr-2 h-5 w-5" />
-                Start Free Practice
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Link>
-              <button className="inline-flex items-center px-8 py-4 border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors">
-                <MessageSquare className="mr-2 h-5 w-5" />
-                Watch Demo
-              </button>
+                <input
+                  type="text"
+                  name="role"
+                  placeholder="Enter your target role (e.g. Product Manager)"
+                  className="flex-1 px-6 py-4 rounded-lg border-2 border-transparent focus:border-blue-500 focus:outline-none shadow-lg text-gray-900"
+                  required
+                />
+                <button
+                  type="submit"
+                  className="inline-flex items-center px-8 py-4 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors shadow-lg whitespace-nowrap"
+                >
+                  <Play className="mr-2 h-5 w-5" />
+                  Start Practice
+                </button>
+              </form>
             </div>
-            
+
             <div className="flex flex-col sm:flex-row items-center justify-center space-y-2 sm:space-y-0 sm:space-x-6 text-sm text-gray-500">
               <span className="flex items-center">
                 <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
@@ -252,7 +265,7 @@ const LandingPage = () => {
         <div className="absolute inset-0 opacity-30" style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7z' fill='%23f1f5f9' fill-opacity='0.4'/%3E%3C/svg%3E")`
         }}></div>
-        
+
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-20">
             <div className="inline-flex items-center px-4 py-2 bg-blue-100 text-blue-800 rounded-full text-sm font-semibold mb-6">
@@ -266,11 +279,11 @@ const LandingPage = () => {
               Your Interview Game
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-              Our AI-powered platform delivers the most realistic interview practice experience 
+              Our AI-powered platform delivers the most realistic interview practice experience
               with cutting-edge features that guarantee results 🚀
             </p>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {features.map((feature, index) => (
               <div
@@ -279,7 +292,7 @@ const LandingPage = () => {
               >
                 {/* Gradient Border Effect */}
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 -z-10 blur-xl"></div>
-                
+
                 {/* Icon */}
                 <div className="relative mb-6">
                   <div className="bg-gradient-to-br from-blue-500 to-purple-600 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300">
@@ -289,7 +302,7 @@ const LandingPage = () => {
                     <CheckCircle className="w-4 h-4 text-white" />
                   </div>
                 </div>
-                
+
                 {/* Content */}
                 <h3 className="text-xl font-bold text-gray-900 mb-4 group-hover:text-blue-600 transition-colors">
                   {feature.title}
@@ -297,7 +310,7 @@ const LandingPage = () => {
                 <p className="text-gray-600 leading-relaxed mb-4">
                   {feature.description}
                 </p>
-                
+
                 {/* CTA */}
                 <div className="flex items-center text-blue-600 font-semibold opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                   <span className="text-sm">Learn more</span>
@@ -306,7 +319,7 @@ const LandingPage = () => {
               </div>
             ))}
           </div>
-          
+
           {/* Bottom CTA */}
           <div className="text-center mt-16">
             <div className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-full font-semibold shadow-lg">
@@ -536,11 +549,10 @@ const LandingPage = () => {
             {plans.map((plan, index) => (
               <div
                 key={index}
-                className={`relative bg-white p-8 rounded-2xl shadow-lg border-2 ${
-                  plan.popular
+                className={`relative bg-white p-8 rounded-2xl shadow-lg border-2 ${plan.popular
                     ? "border-blue-500 ring-4 ring-blue-100"
                     : "border-gray-200"
-                }`}
+                  }`}
               >
                 {plan.popular && (
                   <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
@@ -571,11 +583,10 @@ const LandingPage = () => {
                 </ul>
                 <Link
                   to="/register"
-                  className={`block w-full text-center py-3 px-6 rounded-lg font-semibold transition-colors ${
-                    plan.popular
+                  className={`block w-full text-center py-3 px-6 rounded-lg font-semibold transition-colors ${plan.popular
                       ? "bg-blue-600 text-white hover:bg-blue-700 shadow-lg"
                       : "bg-gray-100 text-gray-900 hover:bg-gray-200"
-                  }`}
+                    }`}
                 >
                   {plan.cta}
                 </Link>
@@ -594,7 +605,7 @@ const LandingPage = () => {
           <div className="absolute bottom-10 right-10 w-40 h-40 bg-purple-500/30 rounded-full blur-3xl animate-pulse delay-1000"></div>
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-pink-500/20 rounded-full blur-3xl animate-pulse delay-2000"></div>
         </div>
-        
+
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           {/* Badge */}
           <div className="inline-flex items-center px-6 py-3 bg-white/10 backdrop-blur-sm border border-white/20 text-white rounded-full text-sm font-semibold mb-8">
@@ -602,7 +613,7 @@ const LandingPage = () => {
             Join 10,000+ Successful Job Seekers
             <span className="ml-2 px-2 py-1 bg-green-500 text-xs rounded-full animate-pulse">TRENDING</span>
           </div>
-          
+
           {/* Main Heading */}
           <h2 className="text-5xl md:text-6xl font-black text-white mb-6 leading-tight">
             Ready to{" "}
@@ -612,14 +623,14 @@ const LandingPage = () => {
             <br />
             Your Next Interview?
           </h2>
-          
+
           {/* Subheading */}
           <p className="text-xl text-gray-300 mb-12 max-w-3xl mx-auto leading-relaxed">
-            🎯 Transform from interview anxiety to interview confidence in minutes. 
+            🎯 Transform from interview anxiety to interview confidence in minutes.
             <br />
             <span className="text-white font-semibold">Join the AI revolution</span> and land your dream job faster than ever.
           </p>
-          
+
           {/* Social Proof */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-8 mb-12">
             <div className="flex items-center text-white">
@@ -636,7 +647,7 @@ const LandingPage = () => {
                 <div className="text-sm text-gray-300">Average 40% improvement</div>
               </div>
             </div>
-            
+
             <div className="flex items-center text-yellow-400">
               {[...Array(5)].map((_, i) => (
                 <Star key={i} className="w-6 h-6 fill-current" />
@@ -644,7 +655,7 @@ const LandingPage = () => {
               <span className="ml-2 text-white font-semibold">4.9/5 Rating</span>
             </div>
           </div>
-          
+
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-6 justify-center mb-12">
             <Link
@@ -656,7 +667,7 @@ const LandingPage = () => {
               <span className="relative">Start Free Practice Now</span>
               <Zap className="relative ml-3 h-6 w-6 group-hover:rotate-12 transition-transform" />
             </Link>
-            
+
             <Link
               to="/login"
               className="group inline-flex items-center px-12 py-6 border-2 border-white/30 text-white font-bold text-lg rounded-2xl hover:bg-white/10 backdrop-blur-sm transition-all duration-300 hover:border-white/50"
@@ -666,14 +677,14 @@ const LandingPage = () => {
               <ArrowRight className="ml-3 h-6 w-6 group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>
-          
+
           {/* Guarantee */}
           <div className="inline-flex items-center px-6 py-3 bg-green-500/20 backdrop-blur-sm border border-green-500/30 text-green-300 rounded-full">
             <Shield className="w-5 h-5 mr-2" />
             <span className="font-semibold">30-Day Success Guarantee</span>
             <span className="ml-2">or your money back</span>
           </div>
-          
+
           {/* Urgency */}
           <div className="mt-8 text-center">
             <p className="text-gray-400 text-sm">
@@ -691,7 +702,7 @@ const LandingPage = () => {
         }}></div>
         <div className="absolute top-0 left-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl"></div>
         <div className="absolute bottom-0 right-0 w-40 h-40 bg-purple-500/10 rounded-full blur-3xl"></div>
-        
+
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
             {/* Brand Section */}
@@ -703,10 +714,10 @@ const LandingPage = () => {
                 </span>
               </div>
               <p className="text-gray-300 mb-6 max-w-md leading-relaxed">
-                🚀 The world's most advanced AI-powered mock interview platform. 
+                🚀 The world's most advanced AI-powered mock interview platform.
                 Transform your interview skills with realistic conversations and expert feedback.
               </p>
-              
+
               {/* Social Proof */}
               <div className="flex items-center space-x-6 mb-6">
                 <div className="text-center">
@@ -722,13 +733,13 @@ const LandingPage = () => {
                   <div className="text-xs text-gray-400">Rating</div>
                 </div>
               </div>
-              
+
               {/* Newsletter */}
               <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6">
                 <h4 className="font-semibold mb-3 text-white">Stay Updated 📧</h4>
                 <div className="flex gap-3">
-                  <input 
-                    type="email" 
+                  <input
+                    type="email"
                     placeholder="Enter your email"
                     className="flex-1 px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-400"
                   />
@@ -738,7 +749,7 @@ const LandingPage = () => {
                 </div>
               </div>
             </div>
-            
+
             {/* Product Links */}
             <div>
               <h3 className="font-bold mb-6 text-white flex items-center">
@@ -772,7 +783,7 @@ const LandingPage = () => {
                 </li>
               </ul>
             </div>
-            
+
             {/* Support Links */}
             <div>
               <h3 className="font-bold mb-6 text-white flex items-center">
@@ -807,7 +818,7 @@ const LandingPage = () => {
               </ul>
             </div>
           </div>
-          
+
           {/* Bottom Section */}
           <div className="border-t border-gray-800 mt-12 pt-8">
             <div className="flex flex-col md:flex-row justify-between items-center">
@@ -818,7 +829,7 @@ const LandingPage = () => {
                   Made with ❤️ for job seekers worldwide
                 </span>
               </div>
-              
+
               <div className="flex items-center space-x-6">
                 <span className="text-gray-400 text-sm">Powered by</span>
                 <div className="flex items-center space-x-3">

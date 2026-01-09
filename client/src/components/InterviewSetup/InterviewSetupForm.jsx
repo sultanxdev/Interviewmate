@@ -97,14 +97,30 @@ const InterviewSetupForm = () => {
   const availableTopics = INTERVIEW_TOPICS[formData.type] || []
 
   // Calculate cost for VAPI mode
-  const vapiCost = formData.configuration.interviewMode === INTERVIEW_MODES.VAPI 
-    ? formData.configuration.duration * 0.5 
+  const vapiCost = formData.configuration.interviewMode === INTERVIEW_MODES.VAPI
+    ? formData.configuration.duration * 0.5
     : 0
 
   // Check if user has sufficient minutes/balance
-  const canAffordVapi = user?.subscription?.plan === 'free' 
+  const canAffordVapi = user?.subscription?.plan === 'free'
     ? user.subscription.vapiMinutesRemaining >= formData.configuration.duration
     : user?.subscription?.payAsYouGoBalance >= vapiCost
+
+  // Check for pre-filled role from onboarding
+  useEffect(() => {
+    const targetRole = sessionStorage.getItem('targetRole')
+    if (targetRole) {
+      setFormData(prev => ({
+        ...prev,
+        candidateInfo: {
+          ...prev.candidateInfo,
+          role: targetRole
+        }
+      }))
+      // Optional: Clear it so it doesn't persist forever
+      sessionStorage.removeItem('targetRole')
+    }
+  }, [])
 
   /**
    * Handle form field changes
@@ -117,7 +133,7 @@ const InterviewSetupForm = () => {
         [field]: value
       }
     }))
-    
+
     // Clear errors for this field
     if (errors[`${section}.${field}`]) {
       setErrors(prev => ({
@@ -150,12 +166,12 @@ const InterviewSetupForm = () => {
 
     try {
       setUploadProgress(prev => ({ ...prev, [fileType]: 0 }))
-      
+
       const formDataUpload = new FormData()
       formDataUpload.append('file', file)
       formDataUpload.append('type', fileType)
 
-      const result = await handleApiResponse(() => 
+      const result = await handleApiResponse(() =>
         apiService.upload[fileType](formDataUpload)
       )
 
@@ -168,7 +184,7 @@ const InterviewSetupForm = () => {
             uploadDate: new Date(),
             parsedData: result.data.parsedData
           })
-          
+
           // Auto-fill skills if resume was parsed
           if (result.data.parsedData?.skills) {
             handleInputChange('candidateInfo', 'skills', result.data.parsedData.skills)
@@ -179,7 +195,7 @@ const InterviewSetupForm = () => {
             path: result.data.filePath,
             uploadDate: new Date()
           })
-          
+
           // Auto-fill job description text
           if (result.data.extractedText) {
             handleInputChange('configuration', 'jobDescription', result.data.extractedText)
@@ -215,7 +231,7 @@ const InterviewSetupForm = () => {
    * Remove custom topic
    */
   const removeCustomTopic = (topic) => {
-    handleInputChange('configuration', 'customTopics', 
+    handleInputChange('configuration', 'customTopics',
       formData.configuration.customTopics.filter(t => t !== topic)
     )
   }
@@ -237,7 +253,7 @@ const InterviewSetupForm = () => {
    * Remove custom question
    */
   const removeCustomQuestion = (index) => {
-    handleInputChange('configuration', 'customQuestions', 
+    handleInputChange('configuration', 'customQuestions',
       formData.configuration.customQuestions.filter((_, i) => i !== index)
     )
   }
@@ -248,7 +264,7 @@ const InterviewSetupForm = () => {
   const handleTopicToggle = (topic) => {
     const currentTopics = formData.configuration.topics
     const isSelected = currentTopics.includes(topic)
-    
+
     if (isSelected) {
       handleInputChange('configuration', 'topics', currentTopics.filter(t => t !== topic))
     } else {
@@ -295,7 +311,7 @@ const InterviewSetupForm = () => {
    */
   const handleSubmit = async (e) => {
     e.preventDefault()
-    
+
     if (!validateForm()) {
       toast.error('Please fix the errors and try again')
       return
@@ -303,9 +319,9 @@ const InterviewSetupForm = () => {
 
     try {
       setLoading(true)
-      
+
       const result = await createInterview(formData)
-      
+
       if (result.success) {
         toast.success('Interview created successfully!')
         navigate(`/interview/live/${result.interview._id}`)
@@ -356,26 +372,23 @@ const InterviewSetupForm = () => {
             { step: 3, title: 'Configuration', icon: Brain }
           ].map(({ step, title, icon: Icon }) => (
             <div key={step} className="flex items-center">
-              <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${
-                currentStep >= step 
-                  ? 'bg-blue-600 border-blue-600 text-white' 
+              <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${currentStep >= step
+                  ? 'bg-blue-600 border-blue-600 text-white'
                   : 'border-gray-300 text-gray-400'
-              }`}>
+                }`}>
                 {currentStep > step ? (
                   <CheckCircle className="w-5 h-5" />
                 ) : (
                   <Icon className="w-5 h-5" />
                 )}
               </div>
-              <span className={`ml-2 text-sm font-medium ${
-                currentStep >= step ? 'text-blue-600' : 'text-gray-400'
-              }`}>
+              <span className={`ml-2 text-sm font-medium ${currentStep >= step ? 'text-blue-600' : 'text-gray-400'
+                }`}>
                 {title}
               </span>
               {step < 3 && (
-                <div className={`w-16 h-0.5 mx-4 ${
-                  currentStep > step ? 'bg-blue-600' : 'bg-gray-300'
-                }`} />
+                <div className={`w-16 h-0.5 mx-4 ${currentStep > step ? 'bg-blue-600' : 'bg-gray-300'
+                  }`} />
               )}
             </div>
           ))}
@@ -401,9 +414,8 @@ const InterviewSetupForm = () => {
                   type="text"
                   value={formData.candidateInfo.name}
                   onChange={(e) => handleInputChange('candidateInfo', 'name', e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    errors['candidateInfo.name'] ? 'border-red-500' : 'border-gray-300'
-                  }`}
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors['candidateInfo.name'] ? 'border-red-500' : 'border-gray-300'
+                    }`}
                   placeholder="Enter candidate name"
                 />
                 {errors['candidateInfo.name'] && (
@@ -420,9 +432,8 @@ const InterviewSetupForm = () => {
                   type="text"
                   value={formData.candidateInfo.role}
                   onChange={(e) => handleInputChange('candidateInfo', 'role', e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    errors['candidateInfo.role'] ? 'border-red-500' : 'border-gray-300'
-                  }`}
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors['candidateInfo.role'] ? 'border-red-500' : 'border-gray-300'
+                    }`}
                   placeholder="e.g., Backend Developer, Data Scientist"
                 />
                 {errors['candidateInfo.role'] && (
@@ -439,9 +450,8 @@ const InterviewSetupForm = () => {
                   type="text"
                   value={formData.candidateInfo.company}
                   onChange={(e) => handleInputChange('candidateInfo', 'company', e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    errors['candidateInfo.company'] ? 'border-red-500' : 'border-gray-300'
-                  }`}
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors['candidateInfo.company'] ? 'border-red-500' : 'border-gray-300'
+                    }`}
                   placeholder="e.g., TCS, Amazon, Google"
                 />
                 {errors['candidateInfo.company'] && (
@@ -570,11 +580,10 @@ const InterviewSetupForm = () => {
                 {Object.entries(INTERVIEW_TYPE_LABELS).map(([type, label]) => (
                   <div
                     key={type}
-                    className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                      formData.type === type
+                    className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${formData.type === type
                         ? 'border-blue-500 bg-blue-50'
                         : 'border-gray-200 hover:border-gray-300'
-                    }`}
+                      }`}
                     onClick={() => handleInputChange('', 'type', type)}
                   >
                     <h3 className="font-medium text-gray-900 mb-1">{label}</h3>
@@ -611,11 +620,10 @@ const InterviewSetupForm = () => {
                     key={topic}
                     type="button"
                     onClick={() => handleTopicToggle(topic)}
-                    className={`px-3 py-2 text-sm rounded-lg border transition-colors ${
-                      formData.configuration.topics.includes(topic)
+                    className={`px-3 py-2 text-sm rounded-lg border transition-colors ${formData.configuration.topics.includes(topic)
                         ? 'bg-blue-100 border-blue-300 text-blue-700'
                         : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100'
-                    }`}
+                      }`}
                   >
                     {topic}
                   </button>
@@ -727,11 +735,10 @@ const InterviewSetupForm = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Web Speech Mode */}
                 <div
-                  className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                    formData.configuration.interviewMode === INTERVIEW_MODES.WEB_SPEECH
+                  className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${formData.configuration.interviewMode === INTERVIEW_MODES.WEB_SPEECH
                       ? 'border-blue-500 bg-blue-50'
                       : 'border-gray-200 hover:border-gray-300'
-                  }`}
+                    }`}
                   onClick={() => handleInputChange('configuration', 'interviewMode', INTERVIEW_MODES.WEB_SPEECH)}
                 >
                   <div className="flex items-center justify-between mb-2">
@@ -755,11 +762,10 @@ const InterviewSetupForm = () => {
 
                 {/* VAPI Mode */}
                 <div
-                  className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                    formData.configuration.interviewMode === INTERVIEW_MODES.VAPI
+                  className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${formData.configuration.interviewMode === INTERVIEW_MODES.VAPI
                       ? 'border-blue-500 bg-blue-50'
                       : 'border-gray-200 hover:border-gray-300'
-                  }`}
+                    }`}
                   onClick={() => handleInputChange('configuration', 'interviewMode', INTERVIEW_MODES.VAPI)}
                 >
                   <div className="flex items-center justify-between mb-2">
@@ -779,14 +785,14 @@ const InterviewSetupForm = () => {
                     <li>• Adaptive questioning</li>
                     <li>• Premium AI evaluation</li>
                   </ul>
-                  
+
                   {/* Balance Check */}
                   {formData.configuration.interviewMode === INTERVIEW_MODES.VAPI && (
                     <div className="mt-3 p-2 rounded bg-gray-50">
                       {canAffordVapi ? (
                         <div className="flex items-center text-green-600 text-xs">
                           <CheckCircle className="w-3 h-3 mr-1" />
-                          {user?.subscription?.plan === 'free' 
+                          {user?.subscription?.plan === 'free'
                             ? `${user.subscription.vapiMinutesRemaining} minutes remaining`
                             : `₹${user.subscription.payAsYouGoBalance} balance available`
                           }
@@ -829,9 +835,8 @@ const InterviewSetupForm = () => {
                 <select
                   value={formData.configuration.duration}
                   onChange={(e) => handleInputChange('configuration', 'duration', parseInt(e.target.value))}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    errors['configuration.duration'] ? 'border-red-500' : 'border-gray-300'
-                  }`}
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors['configuration.duration'] ? 'border-red-500' : 'border-gray-300'
+                    }`}
                 >
                   {DURATION_OPTIONS.map(({ value, label }) => (
                     <option key={value} value={value}>{label}</option>
@@ -850,9 +855,8 @@ const InterviewSetupForm = () => {
                 <select
                   value={formData.configuration.numQuestions}
                   onChange={(e) => handleInputChange('configuration', 'numQuestions', parseInt(e.target.value))}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    errors['configuration.numQuestions'] ? 'border-red-500' : 'border-gray-300'
-                  }`}
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors['configuration.numQuestions'] ? 'border-red-500' : 'border-gray-300'
+                    }`}
                 >
                   {QUESTION_COUNT_OPTIONS.map(({ value, label }) => (
                     <option key={value} value={value}>{label}</option>
@@ -901,11 +905,10 @@ const InterviewSetupForm = () => {
             type="button"
             onClick={prevStep}
             disabled={currentStep === 1}
-            className={`px-6 py-2 rounded-lg font-medium transition-colors ${
-              currentStep === 1
+            className={`px-6 py-2 rounded-lg font-medium transition-colors ${currentStep === 1
                 ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                 : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-            }`}
+              }`}
           >
             Previous
           </button>
@@ -922,11 +925,10 @@ const InterviewSetupForm = () => {
             <button
               type="submit"
               disabled={loading || !canAffordVapi && formData.configuration.interviewMode === INTERVIEW_MODES.VAPI}
-              className={`px-6 py-2 rounded-lg font-medium transition-colors ${
-                loading || (!canAffordVapi && formData.configuration.interviewMode === INTERVIEW_MODES.VAPI)
+              className={`px-6 py-2 rounded-lg font-medium transition-colors ${loading || (!canAffordVapi && formData.configuration.interviewMode === INTERVIEW_MODES.VAPI)
                   ? 'bg-gray-400 cursor-not-allowed'
                   : 'bg-green-600 hover:bg-green-700'
-              } text-white`}
+                } text-white`}
             >
               {loading ? 'Creating Interview...' : 'Start Interview'}
             </button>
