@@ -30,7 +30,7 @@ const router = express.Router()
 router.get('/create', protect, async (req, res) => {
   try {
     const user = await User.findById(req.user.id)
-    
+
     res.status(200).json({
       success: true,
       data: {
@@ -107,7 +107,7 @@ router.post('/create', protect, [
     // Check if user has enough VAPI minutes (only for VAPI mode)
     const user = await User.findById(req.user.id)
     const mode = req.body.mode || req.body.configuration?.interviewMode || 'webspeech' // Default to webspeech if not specified
-    
+
     if (mode === 'vapi') {
       if (user.subscription.plan === 'free' && user.subscription.vapiMinutesRemaining < configuration.duration) {
         return res.status(400).json({
@@ -115,7 +115,7 @@ router.post('/create', protect, [
           message: 'Insufficient VAPI minutes remaining. Please upgrade to Pro plan or use Web Speech API mode.'
         })
       }
-      
+
       if (user.subscription.plan === 'pro') {
         const cost = configuration.duration * 0.5 // $0.50 per minute
         if (user.subscription.payAsYouGoBalance < cost) {
@@ -162,18 +162,18 @@ router.post('/create', protect, [
 router.get('/history', protect, async (req, res, next) => {
   try {
     console.log('📊 Interview history request from user:', req.user.id)
-    
+
     const page = parseInt(req.query.page) || 1
     const limit = parseInt(req.query.limit) || 10
     const skip = (page - 1) * limit
 
     // Build filter
     const filter = { userId: req.user.id }
-    
+
     if (req.query.type) {
       filter.type = req.query.type
     }
-    
+
     if (req.query.status) {
       filter.status = req.query.status
     }
@@ -337,14 +337,14 @@ router.post('/generate-questions', protect, [
 
     try {
       const questions = await geminiService.generateQuestions(jobDescription, difficulty, count)
-      
+
       res.status(200).json({
         success: true,
         questions
       })
     } catch (aiError) {
       console.error('Gemini AI Error:', aiError)
-      
+
       // Return fallback questions
       const fallbackQuestions = [
         { question: "Tell me about yourself and your background.", type: "behavioral" },
@@ -353,7 +353,7 @@ router.post('/generate-questions', protect, [
         { question: "Describe a challenging situation you faced and how you handled it.", type: "behavioral" },
         { question: "Where do you see yourself in 5 years?", type: "behavioral" }
       ]
-      
+
       res.status(200).json({
         success: true,
         questions: fallbackQuestions,
@@ -391,14 +391,14 @@ router.post('/evaluate', protect, [
 
     try {
       const evaluation = await geminiService.evaluateInterview(transcript, questions)
-      
+
       res.status(200).json({
         success: true,
         evaluation
       })
     } catch (aiError) {
       console.error('Gemini AI Error:', aiError)
-      
+
       // Return fallback evaluation
       const fallbackEvaluation = {
         overallScore: 75,
@@ -411,7 +411,7 @@ router.post('/evaluate', protect, [
           feedback: 'Good response, could be more detailed'
         }))
       }
-      
+
       res.status(200).json({
         success: true,
         evaluation: fallbackEvaluation,
@@ -427,10 +427,14 @@ router.post('/evaluate', protect, [
 // @route   POST /api/interview/generate-followup
 // @access  Private
 router.post('/generate-followup', protect, [
-  body('prompt')
+  body('transcript')
     .trim()
     .notEmpty()
-    .withMessage('Prompt is required')
+    .withMessage('Transcript is required'),
+  body('currentQuestion')
+    .trim()
+    .notEmpty()
+    .withMessage('Current question is required')
 ], async (req, res, next) => {
   try {
     const errors = validationResult(req)
@@ -442,21 +446,23 @@ router.post('/generate-followup', protect, [
       })
     }
 
-    const { prompt } = req.body
+    const { transcript, currentQuestion } = req.body
 
     try {
-      const followUp = await geminiService.generateFollowUp(prompt)
-      
+      const followUp = await geminiService.generateFollowUp(transcript, currentQuestion)
+
       res.status(200).json({
         success: true,
-        followUp
+        followUp: followUp === 'PROCEED' ? '' : followUp,
+        shouldProceed: followUp === 'PROCEED'
       })
     } catch (aiError) {
       console.error('Gemini AI Error:', aiError)
-      
+
       res.status(200).json({
         success: true,
         followUp: '', // Empty follow-up to continue to next question
+        shouldProceed: true,
         message: 'AI follow-up generation unavailable'
       })
     }
@@ -471,7 +477,7 @@ router.post('/generate-followup', protect, [
 router.post('/parse-resume', protect, async (req, res, next) => {
   try {
     const { filePath, fileName } = req.body
-    
+
     if (!filePath || !fileName) {
       return res.status(400).json({
         success: false,
@@ -480,7 +486,7 @@ router.post('/parse-resume', protect, async (req, res, next) => {
     }
 
     const result = await resumeParser.parseResume(filePath, fileName)
-    
+
     res.status(200).json({
       success: result.success,
       data: result.data,
@@ -513,9 +519,9 @@ router.post('/resume-questions', protect, [
     }
 
     const { resumeData, interviewType } = req.body
-    
+
     const questions = await resumeParser.generateResumeBasedQuestions(resumeData, interviewType)
-    
+
     res.status(200).json({
       success: true,
       questions
@@ -531,7 +537,7 @@ router.post('/resume-questions', protect, [
 router.get('/test-gemini', protect, async (req, res, next) => {
   try {
     const isWorking = await geminiService.testConnection()
-    
+
     res.status(200).json({
       success: isWorking,
       message: isWorking ? 'Gemini AI is working' : 'Gemini AI connection failed'
@@ -591,7 +597,7 @@ router.put('/:id', protect, async (req, res, next) => {
     // Update allowed fields
     const allowedUpdates = ['status', 'session', 'vapiConfig']
     const updates = {}
-    
+
     Object.keys(req.body).forEach(key => {
       if (allowedUpdates.includes(key)) {
         updates[key] = req.body[key]
@@ -693,13 +699,13 @@ router.post('/:id/evaluate', protect, [
         success: true,
         interview,
         evaluation,
-        message: evaluation.evaluationModel === 'fallback' ? 
-          'Interview evaluated with fallback system. AI evaluation temporarily unavailable.' : 
+        message: evaluation.evaluationModel === 'fallback' ?
+          'Interview evaluated with fallback system. AI evaluation temporarily unavailable.' :
           'Interview evaluated successfully.'
       })
     } catch (error) {
       console.error('Unexpected error during evaluation:', error)
-      
+
       // Final fallback - return basic evaluation
       const basicEvaluation = {
         overallScore: 75,
@@ -719,7 +725,7 @@ router.post('/:id/evaluate', protect, [
         evaluatedAt: new Date(),
         evaluationModel: 'basic-fallback'
       }
-      
+
       interview.evaluation = basicEvaluation
       await interview.save()
 
@@ -769,13 +775,13 @@ router.delete('/:id', protect, async (req, res, next) => {
 router.post('/vapi-webhook', async (req, res) => {
   try {
     const event = req.body
-    
+
     // Handle different VAPI events
     switch (event.type) {
       case 'call.started':
         console.log('VAPI call started:', event.data)
         break
-        
+
       case 'call.ended':
         console.log('VAPI call ended:', event.data)
         // Update interview with call data
@@ -789,7 +795,7 @@ router.post('/vapi-webhook', async (req, res) => {
           }
         }
         break
-        
+
       case 'transcript.updated':
         console.log('VAPI transcript updated:', event.data)
         // Update interview transcript
@@ -801,11 +807,11 @@ router.post('/vapi-webhook', async (req, res) => {
           }
         }
         break
-        
+
       default:
         console.log('Unknown VAPI event:', event.type)
     }
-    
+
     res.status(200).json({ received: true })
   } catch (error) {
     console.error('VAPI webhook error:', error)

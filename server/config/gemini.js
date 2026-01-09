@@ -333,12 +333,24 @@ Example: [{"question": "What is your experience with...", "type": "technical"}]
     return questions.slice(0, count)
   }
 
-  async generateFollowUp(prompt) {
+  async generateFollowUp(transcript, currentQuestion) {
     if (!this.isInitialized) {
       this.initialize()
     }
 
     try {
+      const prompt = `
+You are an expert interviewer. You just asked this question: "${currentQuestion}"
+The candidate's response was: "${transcript}"
+
+Analyze the response and provide a single follow-up response.
+- If the response was vague, incomplete, or lacked examples, ask a specific follow-up question to dig deeper.
+- If the response was thorough, acknowledge it briefly and tell the user we are moving to the next topic (return "PROCEED").
+- If the candidate mentioned something very interesting or a specific technology, ask a deep-dive question about it.
+
+Keep the follow-up concise and natural.
+Return ONLY the follow-up text or "PROCEED".
+`
       const result = await this.model.generateContent(prompt)
       const response = result.response
       const text = response.text()
@@ -346,7 +358,7 @@ Example: [{"question": "What is your experience with...", "type": "technical"}]
       return text.trim()
     } catch (error) {
       console.error('❌ Gemini follow-up generation error:', error)
-      throw error
+      return "PROCEED" // Fallback to next question
     }
   }
 
