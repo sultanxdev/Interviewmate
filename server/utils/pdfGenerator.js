@@ -5,105 +5,105 @@ import path from 'path'
 // Using HTML template approach for better formatting
 
 export const generatePDFReport = async (interview, report) => {
-  try {
-    // Create reports directory if it doesn't exist
-    const reportsDir = path.join(process.cwd(), 'uploads', 'reports')
-    if (!fs.existsSync(reportsDir)) {
-      fs.mkdirSync(reportsDir, { recursive: true })
-    }
-
-    // Generate filename
-    const filename = `interview-report-${report.reportId}.pdf`
-    const filepath = path.join(reportsDir, filename)
-
-    // Try to use Puppeteer for PDF generation if available
     try {
-      const pdfBuffer = await generatePDFWithPuppeteer(interview, report)
-      fs.writeFileSync(filepath, pdfBuffer)
-      
-      return {
-        success: true,
-        url: `/uploads/reports/${filename}`,
-        path: filepath,
-        size: fs.statSync(filepath).size
-      }
-    } catch (puppeteerError) {
-      console.warn('Puppeteer not available, using HTML fallback:', puppeteerError.message)
-      
-      // Fallback to HTML report
-      const htmlContent = generateHTMLReport(interview, report)
-      const htmlFilename = `interview-report-${report.reportId}.html`
-      const htmlFilepath = path.join(reportsDir, htmlFilename)
-      
-      fs.writeFileSync(htmlFilepath, htmlContent)
-      
-      return {
-        success: true,
-        url: `/uploads/reports/${htmlFilename}`,
-        path: htmlFilepath,
-        size: fs.statSync(htmlFilepath).size,
-        format: 'html'
-      }
+        // Create reports directory if it doesn't exist
+        const reportsDir = path.join(process.cwd(), 'uploads', 'reports')
+        if (!fs.existsSync(reportsDir)) {
+            fs.mkdirSync(reportsDir, { recursive: true })
+        }
+
+        // Generate filename
+        const filename = `interview-report-${report.reportId}.pdf`
+        const filepath = path.join(reportsDir, filename)
+
+        // Try to use Puppeteer for PDF generation if available
+        try {
+            const pdfBuffer = await generatePDFWithPuppeteer(interview, report)
+            fs.writeFileSync(filepath, pdfBuffer)
+
+            return {
+                success: true,
+                url: `/uploads/reports/${filename}`,
+                path: filepath,
+                size: fs.statSync(filepath).size
+            }
+        } catch (puppeteerError) {
+            console.warn('Puppeteer not available, using HTML fallback:', puppeteerError.message)
+
+            // Fallback to HTML report
+            const htmlContent = generateHTMLReport(interview, report)
+            const htmlFilename = `interview-report-${report.reportId}.html`
+            const htmlFilepath = path.join(reportsDir, htmlFilename)
+
+            fs.writeFileSync(htmlFilepath, htmlContent)
+
+            return {
+                success: true,
+                url: `/uploads/reports/${htmlFilename}`,
+                path: htmlFilepath,
+                size: fs.statSync(htmlFilepath).size,
+                format: 'html'
+            }
+        }
+    } catch (error) {
+        console.error('PDF generation error:', error)
+        return {
+            success: false,
+            error: error.message
+        }
     }
-  } catch (error) {
-    console.error('PDF generation error:', error)
-    return {
-      success: false,
-      error: error.message
-    }
-  }
 }
 
 // Generate PDF using Puppeteer (if available)
 async function generatePDFWithPuppeteer(interview, report) {
-  let browser = null
-  try {
-    // Dynamic import to handle optional dependency
-    const puppeteer = await import('puppeteer')
-    
-    browser = await puppeteer.default.launch({
-      headless: 'new',
-      args: ['--no-sandbox', '--disable-setuid-sandbox']
-    })
-    
-    const page = await browser.newPage()
-    const htmlContent = generateHTMLReport(interview, report)
-    
-    await page.setContent(htmlContent, { waitUntil: 'networkidle0' })
-    
-    const pdfBuffer = await page.pdf({
-      format: 'A4',
-      printBackground: true,
-      margin: {
-        top: '20mm',
-        right: '20mm',
-        bottom: '20mm',
-        left: '20mm'
-      }
-    })
-    
-    return pdfBuffer
-  } catch (error) {
-    throw new Error(`Puppeteer PDF generation failed: ${error.message}`)
-  } finally {
-    // Always close browser instance to prevent memory leaks
-    if (browser) {
-      try {
-        await browser.close()
-      } catch (closeError) {
-        console.warn('Warning: Failed to close browser instance:', closeError.message)
-      }
+    let browser = null
+    try {
+        // Dynamic import to handle optional dependency
+        const puppeteer = await import('puppeteer')
+
+        browser = await puppeteer.default.launch({
+            headless: 'new',
+            args: ['--no-sandbox', '--disable-setuid-sandbox']
+        })
+
+        const page = await browser.newPage()
+        const htmlContent = generateHTMLReport(interview, report)
+
+        await page.setContent(htmlContent, { waitUntil: 'networkidle0' })
+
+        const pdfBuffer = await page.pdf({
+            format: 'A4',
+            printBackground: true,
+            margin: {
+                top: '20mm',
+                right: '20mm',
+                bottom: '20mm',
+                left: '20mm'
+            }
+        })
+
+        return pdfBuffer
+    } catch (error) {
+        throw new Error(`Puppeteer PDF generation failed: ${error.message}`)
+    } finally {
+        // Always close browser instance to prevent memory leaks
+        if (browser) {
+            try {
+                await browser.close()
+            } catch (closeError) {
+                console.warn('Warning: Failed to close browser instance:', closeError.message)
+            }
+        }
     }
-  }
 }
 
 // Generate HTML report template
 function generateHTMLReport(interview, report) {
-  const { candidateInfo, evaluation } = interview
-  const date = new Date(interview.createdAt).toLocaleDateString()
-  const grade = getPerformanceGrade(evaluation.overallScore)
-  
-  return `
+    const { candidateInfo, evaluation } = interview
+    const date = new Date(interview.createdAt).toLocaleDateString()
+    const grade = getPerformanceGrade(evaluation.overallScore)
+
+    return `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -488,6 +488,16 @@ function generateHTMLReport(interview, report) {
             </div>
         ` : ''}
 
+        <!-- Transcript Section -->
+        ${interview.session?.transcript ? `
+            <div class="transcript-section" style="margin-top: 40px; page-break-before: always;">
+                <h2 class="section-title">Interview Transcript Highlights</h2>
+                <div style="background: #f1f5f9; padding: 20px; border-radius: 10px; font-size: 14px; white-space: pre-wrap; color: #475569;">
+                    ${interview.session.transcript}
+                </div>
+            </div>
+        ` : ''}
+
         <!-- Footer -->
         <div class="footer">
             <div class="footer-logo">InterviewMate AI</div>
@@ -502,33 +512,33 @@ function generateHTMLReport(interview, report) {
 
 // Helper functions
 function getPerformanceGrade(score) {
-  if (score >= 90) return 'A+'
-  if (score >= 80) return 'A'
-  if (score >= 70) return 'B'
-  if (score >= 60) return 'C'
-  return 'D'
+    if (score >= 90) return 'A+'
+    if (score >= 80) return 'A'
+    if (score >= 70) return 'B'
+    if (score >= 60) return 'C'
+    return 'D'
 }
 
 function getScoreDescription(score) {
-  if (score >= 90) return 'Outstanding Performance - Exceeds Expectations'
-  if (score >= 80) return 'Strong Performance - Meets and Often Exceeds Expectations'
-  if (score >= 70) return 'Good Performance - Meets Most Expectations'
-  if (score >= 60) return 'Adequate Performance - Meets Basic Expectations'
-  return 'Needs Improvement - Below Expectations'
+    if (score >= 90) return 'Outstanding Performance - Exceeds Expectations'
+    if (score >= 80) return 'Strong Performance - Meets and Often Exceeds Expectations'
+    if (score >= 70) return 'Good Performance - Meets Most Expectations'
+    if (score >= 60) return 'Adequate Performance - Meets Basic Expectations'
+    return 'Needs Improvement - Below Expectations'
 }
 
 function formatSkillName(skill) {
-  return skill.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())
+    return skill.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())
 }
 
 
 // Legacy text-based report generation (fallback)
 const generateReportContent = (interview, report) => {
-  const { candidateInfo, evaluation } = interview
-  const date = new Date(interview.createdAt).toLocaleDateString()
-  const grade = getPerformanceGrade(evaluation.overallScore)
+    const { candidateInfo, evaluation } = interview
+    const date = new Date(interview.createdAt).toLocaleDateString()
+    const grade = getPerformanceGrade(evaluation.overallScore)
 
-  return `
+    return `
 INTERVIEWMATE - INTERVIEW REPORT
 ================================
 
@@ -584,5 +594,5 @@ Powered by Advanced AI Analysis
 }
 
 export default {
-  generatePDFReport
+    generatePDFReport
 }

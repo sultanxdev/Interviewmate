@@ -7,7 +7,6 @@ import {
 import { AuthProvider } from "./contexts/AuthContext";
 import { InterviewProvider } from "./contexts/InterviewContext";
 import ProtectedRoute from "./components/ProtectedRoute";
-import ErrorBoundary from "./components/ErrorBoundary";
 // Pages
 import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
@@ -29,7 +28,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 
 function App() {
   return (
-    <ErrorBoundary>
+    
       <AuthProvider>
         <InterviewProvider>
           <Router
@@ -169,7 +168,7 @@ function App() {
           </Router>
         </InterviewProvider>
       </AuthProvider>
-    </ErrorBoundary>
+    
   );
 }
 

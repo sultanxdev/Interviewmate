@@ -49,8 +49,17 @@ const RegisterPage = () => {
       return false
     }
 
-    if (formData.password.length < 6) {
-      toast.error('Password must be at least 6 characters')
+    if (formData.password.length < 8) {
+      toast.error('Password must be at least 8 characters')
+      return false
+    }
+
+    const hasUpperCase = /[A-Z]/.test(formData.password)
+    const hasLowerCase = /[a-z]/.test(formData.password)
+    const hasNumbers = /\d/.test(formData.password)
+
+    if (!hasUpperCase || !hasLowerCase || !hasNumbers) {
+      toast.error('Password must contain uppercase, lowercase, and numeric characters')
       return false
     }
 
@@ -86,12 +95,20 @@ const RegisterPage = () => {
 
   const getPasswordStrength = (password) => {
     if (password.length === 0) return { strength: 0, label: '', color: '' }
-    if (password.length < 6) return { strength: 1, label: 'Weak', color: 'text-red-500' }
-    if (password.length < 10) return { strength: 2, label: 'Fair', color: 'text-yellow-500' }
-    if (password.length >= 10 && /[A-Z]/.test(password) && /[0-9]/.test(password)) {
+    if (password.length < 8) return { strength: 1, label: 'Weak', color: 'text-red-500' }
+
+    const hasUpperCase = /[A-Z]/.test(password)
+    const hasLowerCase = /[a-z]/.test(password)
+    const hasNumbers = /\d/.test(password)
+    const hasSpecial = /[^A-Za-z0-9]/.test(password)
+
+    if (hasUpperCase && hasLowerCase && hasNumbers && password.length >= 10) {
       return { strength: 3, label: 'Strong', color: 'text-green-500' }
     }
-    return { strength: 2, label: 'Fair', color: 'text-yellow-500' }
+    if (hasUpperCase && hasLowerCase && hasNumbers) {
+      return { strength: 2, label: 'Fair', color: 'text-yellow-500' }
+    }
+    return { strength: 1, label: 'Weak', color: 'text-red-500' }
   }
 
   const passwordStrength = getPasswordStrength(formData.password)
@@ -179,8 +196,8 @@ const RegisterPage = () => {
                     <div className="flex-1 bg-gray-200 rounded-full h-2">
                       <div
                         className={`h-2 rounded-full transition-all duration-300 ${passwordStrength.strength === 1 ? 'bg-red-500 w-1/3' :
-                            passwordStrength.strength === 2 ? 'bg-yellow-500 w-2/3' :
-                              passwordStrength.strength === 3 ? 'bg-green-500 w-full' : 'w-0'
+                          passwordStrength.strength === 2 ? 'bg-yellow-500 w-2/3' :
+                            passwordStrength.strength === 3 ? 'bg-green-500 w-full' : 'w-0'
                           }`}
                       />
                     </div>

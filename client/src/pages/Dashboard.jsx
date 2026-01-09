@@ -79,8 +79,8 @@ const Dashboard = () => {
         if (analyticsResult.success) {
           setAnalytics(
             analyticsResult.data?.analytics ||
-              analyticsResult.analytics ||
-              defaultAnalytics
+            analyticsResult.analytics ||
+            defaultAnalytics
           );
         } else {
           console.log("No analytics found:", analyticsResult.message);
@@ -239,109 +239,143 @@ const Dashboard = () => {
   return (
     <DashboardLayout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Welcome Section with Avatar */}
-        <div className="mb-8">
-          <div className="flex items-center space-x-4 mb-4">
-            <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
-              <span className="text-2xl font-bold text-white">
-                {user?.name?.charAt(0)?.toUpperCase() || "U"}
-              </span>
+        {/* Welcome Section */}
+        <div className="mb-10">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="flex items-center space-x-5">
+              <div className="relative">
+                <div className="w-16 h-16 bg-gradient-to-br from-brand-500 to-accent-500 rounded-2xl flex items-center justify-center shadow-premium transform rotate-3 hover:rotate-0 transition-transform duration-300">
+                  <span className="text-2xl font-black text-white">
+                    {user?.name?.charAt(0)?.toUpperCase() || "U"}
+                  </span>
+                </div>
+                <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 rounded-full border-4 border-white animate-pulse"></div>
+              </div>
+              <div>
+                <h1 className="text-3xl font-black text-slate-900 leading-tight">
+                  Welcome back, {user?.name?.split(" ")[0]}! 👋
+                </h1>
+                <p className="text-slate-500 font-medium">
+                  You've completed <span className="text-brand-600 font-bold">{analytics?.overview?.totalInterviews || 0}</span> sessions this month.
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                Welcome back, {user?.name?.split(" ")[0]}! 👋
-              </h1>
-              <p className="text-lg text-gray-600">
-                Ready to practice your interview skills? Let's get started.
-              </p>
+
+            <div className="flex items-center gap-3">
+              <Link to="/interview/setup" className="btn-premium group">
+                <Play className="w-4 h-4 mr-2 fill-current" />
+                Start New Session
+              </Link>
+              <button className="p-2.5 bg-white border border-slate-200 rounded-xl text-slate-400 hover:text-brand-600 hover:border-brand-100 transition-all shadow-soft">
+                <Calendar className="w-5 h-5" />
+              </button>
             </div>
           </div>
         </div>
 
         {/* Subscription Status with Badge */}
-        <div className="mb-8 p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border border-blue-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="flex items-center space-x-3 mb-3">
-                <h3 className="font-semibold text-gray-900">
-                  {user?.subscription?.plan === "free"
-                    ? "Free Plan"
-                    : "Pro Plan"}
+        <div className="mb-10 glass-card p-6 rounded-2xl border-brand-100 relative overflow-hidden group">
+          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+            <Zap className="w-32 h-32 text-brand-500" />
+          </div>
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
+            <div className="flex-1">
+              <div className="flex items-center space-x-3 mb-4">
+                <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest">
+                  Membership Status
                 </h3>
                 <span
-                  className={`px-3 py-1 text-xs font-medium rounded-full ${
-                    user?.subscription?.plan === "free"
-                      ? "bg-gray-100 text-gray-800"
-                      : "bg-green-100 text-green-800"
-                  }`}
+                  className={`px-3 py-1 text-[10px] font-black rounded-lg uppercase tracking-wider ${user?.subscription?.plan === "free"
+                      ? "bg-slate-200 text-slate-600"
+                      : "bg-brand-500 text-white shadow-glow"
+                    }`}
                 >
-                  {user?.subscription?.plan === "free" ? "FREE" : "PRO"}
+                  {user?.subscription?.plan === "free" ? "Free Member" : "Pro Professional"}
                 </span>
               </div>
 
-              {/* Remaining Minutes Tracker */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                <div className="flex items-center space-x-2">
-                  <Brain className="w-4 h-4 text-blue-500" />
-                  <div>
-                    <span className="text-gray-600">VAPI Minutes:</span>
-                    <div className="font-medium text-gray-900">
-                      {user?.subscription?.vapiMinutesRemaining || 0} remaining
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="card-premium !p-4 !bg-white/50 border-white">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-brand-100 rounded-lg text-brand-600">
+                      <Brain className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold text-slate-500 uppercase">VAPI Minutes</p>
+                      <p className="text-lg font-black text-slate-900">{user?.subscription?.vapiMinutesRemaining || 0}</p>
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Globe className="w-4 h-4 text-green-500" />
-                  <div>
-                    <span className="text-gray-600">Web Speech:</span>
-                    <div className="font-medium text-gray-900">Unlimited</div>
+
+                <div className="card-premium !p-4 !bg-white/50 border-white">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-accent-100 rounded-lg text-accent-600">
+                      <Globe className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold text-slate-500 uppercase">Web Speech</p>
+                      <p className="text-lg font-black text-slate-900">UNLIMITED</p>
+                    </div>
                   </div>
                 </div>
-                {user?.subscription?.plan === "pro" && (
-                  <div className="flex items-center space-x-2">
-                    <Zap className="w-4 h-4 text-yellow-500" />
-                    <div>
-                      <span className="text-gray-600">Balance:</span>
-                      <div className="font-medium text-gray-900">
-                        $
-                        {user?.subscription?.payAsYouGoBalance?.toFixed(2) ||
-                          "0.00"}
+
+                {user?.subscription?.plan === "pro" ? (
+                  <div className="card-premium !p-4 !bg-white/50 border-white">
+                    <div className="flex items-center space-x-3">
+                      <div className="p-2 bg-emerald-100 rounded-lg text-emerald-600">
+                        <Zap className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-bold text-slate-500 uppercase">Wallet Balance</p>
+                        <p className="text-lg font-black text-slate-900">${(user?.subscription?.payAsYouGoBalance || 0).toFixed(2)}</p>
                       </div>
                     </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center">
+                    <Link
+                      to="/subscription"
+                      className="text-brand-600 hover:text-brand-700 font-bold text-sm flex items-center group"
+                    >
+                      Maximize potential with PRO
+                      <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                    </Link>
                   </div>
                 )}
               </div>
             </div>
+
             {user?.subscription?.plan === "free" && (
               <Link
-                to="/subscription"
-                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-lg hover:shadow-xl"
+                to="/pricing"
+                className="btn-premium whitespace-nowrap !bg-slate-900 hover:!bg-black shadow-none"
               >
-                Upgrade CTA
+                Go Unlimited Pro
               </Link>
             )}
           </div>
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
           {stats.map((stat) => (
             <div
               key={stat.name}
-              className="bg-white p-6 rounded-lg shadow-sm border"
+              className="card-premium group hover:-translate-y-1"
             >
-              <div className="flex items-center">
-                <div className={`p-2 rounded-lg bg-gray-100 ${stat.color}`}>
+              <div className="flex items-center justify-between mb-4">
+                <div className={`p-3 rounded-2xl bg-slate-50 ${stat.color} shadow-soft group-hover:scale-110 transition-transform`}>
                   <stat.icon className="w-6 h-6" />
                 </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">
-                    {stat.name}
-                  </p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {stat.value}
-                  </p>
-                </div>
+                <TrendingUp className="w-4 h-4 text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                  {stat.name}
+                </p>
+                <p className="text-2xl font-black text-slate-900 tracking-tight">
+                  {stat.value}
+                </p>
               </div>
             </div>
           ))}
@@ -350,69 +384,65 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Quick Actions */}
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-lg shadow-sm border p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-gray-900">
-                  Start Practicing
-                </h2>
+            <div className="card-premium h-full">
+              <div className="flex items-center justify-between mb-8">
+                <div>
+                  <h2 className="text-xl font-black text-slate-900">
+                    Practice Lab
+                  </h2>
+                  <p className="text-sm text-slate-500 font-medium">Choose your focus area today</p>
+                </div>
                 <Link
                   to="/interview/setup"
-                  className="text-blue-600 hover:text-blue-700 font-medium text-sm flex items-center"
+                  className="p-2 text-slate-400 hover:text-brand-600 transition-colors"
                 >
-                  View all options
-                  <ArrowRight className="w-4 h-4 ml-1" />
+                  <ArrowRight className="w-5 h-5" />
                 </Link>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {quickActions.map((action) => (
                   <Link
                     key={action.title}
                     to={action.href}
-                    className="group p-6 border-2 border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-all"
+                    className="group relative p-6 bg-slate-50 rounded-2xl border border-transparent hover:border-brand-200 hover:bg-white transition-all duration-300 hover:shadow-premium"
                   >
-                    <div className="flex items-start space-x-4">
+                    <div className="flex flex-col h-full">
                       <div
-                        className={`p-3 rounded-lg ${action.color} text-white group-hover:scale-110 transition-transform`}
+                        className={`w-12 h-12 rounded-xl ${action.color} text-white flex items-center justify-center mb-6 shadow-lg group-hover:rotate-6 transition-transform`}
                       >
                         <action.icon className="w-6 h-6" />
                       </div>
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-gray-900 mb-1">
-                          {action.title}
-                        </h3>
-                        <p className="text-sm text-gray-600 mb-3">
-                          {action.description}
-                        </p>
-                        <div className="flex items-center text-blue-600 group-hover:text-blue-700">
-                          <Play className="w-4 h-4 mr-1" />
-                          <span className="text-sm font-medium">
-                            Start Practice
-                          </span>
-                        </div>
+                      <h3 className="font-black text-slate-900 mb-2">
+                        {action.title}
+                      </h3>
+                      <p className="text-xs text-slate-500 font-medium leading-relaxed mb-6 flex-1">
+                        {action.description}
+                      </p>
+                      <div className="flex items-center text-[11px] font-black uppercase tracking-widest text-brand-600">
+                        <Play className="w-3 h-3 mr-2 fill-current" />
+                        Start Session
                       </div>
                     </div>
                   </Link>
                 ))}
               </div>
 
-              {/* Custom Interview Option */}
-              <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                <div className="flex items-center justify-between">
+              {/* Custom Interview Inline */}
+              <div className="mt-8 p-6 bg-brand-600 rounded-2xl relative overflow-hidden group shadow-premium">
+                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
+                  <Brain className="w-24 h-24 text-white" />
+                </div>
+                <div className="relative z-10 flex items-center justify-between">
                   <div>
-                    <h4 className="font-medium text-gray-900">
-                      Custom Interview
-                    </h4>
-                    <p className="text-sm text-gray-600">
-                      Create a personalized interview with your own questions
-                      and topics
-                    </p>
+                    <h4 className="text-white font-black mb-1">Custom Adaptive Suite</h4>
+                    <p className="text-brand-100 text-xs font-medium">Tailor every question and AI persona</p>
                   </div>
                   <Link
                     to="/interview/setup"
-                    className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                    className="px-6 py-2 bg-white text-brand-600 text-xs font-black uppercase tracking-widest rounded-xl hover:bg-brand-50 transition-colors"
                   >
-                    Customize
+                    Launch Lab
                   </Link>
                 </div>
               </div>
@@ -420,76 +450,78 @@ const Dashboard = () => {
           </div>
 
           {/* Recent Activity */}
-          <div className="bg-white rounded-lg shadow-sm border p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-gray-900">
-                Recent Interviews
+          <div className="card-premium !p-0 overflow-hidden flex flex-col h-full">
+            <div className="p-6 border-b border-slate-50 flex items-center justify-between">
+              <h2 className="text-xl font-black text-slate-900">
+                Sessions
               </h2>
               <Link
                 to="/history"
-                className="text-blue-600 hover:text-blue-700 font-medium text-sm flex items-center"
+                className="text-brand-600 hover:text-brand-700 font-bold text-xs uppercase tracking-widest"
               >
-                View all
-                <ArrowRight className="w-4 h-4 ml-1" />
+                All history
               </Link>
             </div>
 
-            {recentInterviews.length > 0 ? (
-              <div className="space-y-4">
-                {recentInterviews.map((interview) => (
-                  <div
-                    key={interview._id}
-                    className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg"
-                  >
+            <div className="flex-1 overflow-y-auto max-h-[480px]">
+              {recentInterviews.length > 0 ? (
+                <div className="divide-y divide-slate-50">
+                  {recentInterviews.map((interview) => (
                     <div
-                      className={`p-2 rounded-lg ${
-                        interview.type === "hr"
-                          ? "bg-blue-100 text-blue-600"
-                          : "bg-green-100 text-green-600"
-                      }`}
+                      key={interview._id}
+                      className="p-5 hover:bg-slate-50/50 transition-colors group"
                     >
-                      {interview.type === "hr" ? (
-                        <Users className="w-4 h-4" />
-                      ) : (
-                        <Code className="w-4 h-4" />
-                      )}
+                      <div className="flex items-center space-x-4">
+                        <div
+                          className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${interview.type === "hr"
+                              ? "bg-brand-50 text-brand-600"
+                              : "bg-accent-50 text-accent-600"
+                            }`}
+                        >
+                          {interview.type === "hr" ? (
+                            <Users className="w-5 h-5" />
+                          ) : (
+                            <Code className="w-5 h-5" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-slate-900 truncate group-hover:text-brand-600 transition-colors">
+                            {interview.candidateInfo.role}
+                          </p>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
+                            {new Date(interview.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} •
+                            {interview.evaluation?.overallScore
+                              ? ` Score: ${interview.evaluation.overallScore}%`
+                              : " Evaluation Pending"}
+                          </p>
+                        </div>
+                        {interview.status === "completed" && (
+                          <Link
+                            to={`/interview/report/${interview._id}`}
+                            className="p-2 text-slate-300 hover:text-brand-600 transition-colors"
+                          >
+                            <ArrowRight className="w-4 h-4" />
+                          </Link>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 truncate">
-                        {interview.candidateInfo.role} at{" "}
-                        {interview.candidateInfo.company}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {new Date(interview.createdAt).toLocaleDateString()} •
-                        {interview.evaluation?.overallScore
-                          ? ` ${interview.evaluation.overallScore}%`
-                          : " Pending"}
-                      </p>
-                    </div>
-                    {interview.status === "completed" && (
-                      <Link
-                        to={`/interview/report/${interview._id}`}
-                        className="text-blue-600 hover:text-blue-700"
-                      >
-                        <BarChart3 className="w-4 h-4" />
-                      </Link>
-                    )}
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-16 px-6">
+                  <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                    <Calendar className="w-8 h-8 text-slate-300" />
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500 mb-4">No interviews yet</p>
-                <Link
-                  to="/interview/setup"
-                  className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  <Play className="w-4 h-4 mr-2" />
-                  Start Your First Interview
-                </Link>
-              </div>
-            )}
+                  <p className="text-slate-500 font-medium mb-8">No interview sessions found</p>
+                  <Link
+                    to="/interview/setup"
+                    className="btn-premium w-full text-center inline-block"
+                  >
+                    Launch Lab
+                  </Link>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 

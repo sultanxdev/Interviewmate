@@ -19,8 +19,19 @@ class GeminiService {
       }
 
       this.genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
-      this.model = this.genAI.getGenerativeModel({ 
-        model: process.env.GEMINI_MODEL || 'gemini-1.5-flash',
+
+      // Try to get model from env, or use list of stable models
+      const modelsToTry = [
+        process.env.GEMINI_MODEL,
+        'gemini-2.5-flash',
+        'gemini-1.5-pro',
+        'gemini-pro'
+      ].filter(Boolean)
+
+      // We'll initialize with the first one, but testConnection will handle the actual validation
+      this.modelName = modelsToTry[0]
+      this.model = this.genAI.getGenerativeModel({
+        model: this.modelName,
         generationConfig: {
           temperature: parseFloat(process.env.GEMINI_TEMPERATURE) || 0.7,
           topK: 40,
@@ -48,7 +59,7 @@ class GeminiService {
       })
 
       this.isInitialized = true
-      console.log('✅ Gemini AI initialized successfully')
+      console.log(`✅ Gemini AI initialized with model: ${this.modelName}`)
       return true
     } catch (error) {
       console.error('❌ Failed to initialize Gemini AI:', error.message)
@@ -78,13 +89,13 @@ class GeminiService {
       return this.parseEvaluationResponse(text)
     } catch (error) {
       console.error('❌ Gemini evaluation error:', error.message)
-      
+
       // If quota exceeded, use fallback
       if (error.message.includes('quota') || error.message.includes('429')) {
         console.log('⚠️ Gemini quota exceeded, using fallback evaluation')
         return this.getFallbackEvaluation()
       }
-      
+
       throw error
     }
   }
@@ -183,7 +194,7 @@ Be constructive, specific, and actionable in your feedback. Focus on both streng
       return this.validateEvaluation(evaluation)
     } catch (error) {
       console.error('❌ Error parsing evaluation response:', error)
-      
+
       // Return fallback evaluation
       return this.getFallbackEvaluation()
     }
@@ -371,7 +382,7 @@ Return ONLY the follow-up text or "PROCEED".
     ]
 
     let questions = []
-    
+
     for (const pattern of questionPatterns) {
       const matches = [...text.matchAll(pattern)]
       if (matches.length > 0) {
@@ -405,53 +416,37 @@ Return ONLY the follow-up text or "PROCEED".
         }
       }
 
-      if (!this.model) {
-        console.log('⚠️ Gemini model not available - using fallback evaluation')
-        return false
+      const modelsToTry = [
+        process.env.GEMINI_MODEL,
+        'gemini-1.5-flash',
+        'gemini-1.5-flash-latest',
+        'gemini-1.5-pro',
+        'gemini-pro'
+      ].filter(Boolean)
+
+      // Try each model until one works
+      for (const modelName of modelsToTry) {
+        try {
+          console.log(`🔄 Testing Gemini model: ${modelName}...`)
+          this.model = this.genAI.getGenerativeModel({ model: modelName })
+          const result = await this.model.generateContent('Hello')
+          const text = result.response.text()
+
+          if (text) {
+            this.modelName = modelName
+            console.log(`✅ Gemini AI connection verified with model: ${modelName}`)
+            return true
+          }
+        } catch (err) {
+          console.warn(`⚠️ Model ${modelName} test failed: ${err.message}`)
+          continue
+        }
       }
 
-      // Skip test if we've recently hit rate limits or errors
-      const now = Date.now()
-      const cooldownPeriod = 5 * 60 * 1000 // 5 minutes cooldown
-      
-      if (this.lastError && now - this.lastErrorTime < cooldownPeriod) {
-        console.log('⚠️ Skipping Gemini test due to recent error (cooldown active)')
-        return false
-      }
-
-      // Don't test if we're close to rate limit
-      if (!this.checkRateLimit()) {
-        console.log('⚠️ Skipping Gemini test due to rate limit')
-        return false
-      }
-
-      // Simple test with minimal content
-      const result = await this.model.generateContent('Hello')
-      const response = result.response
-      const text = response.text()
-      
-      this.requestCount++
-      console.log('✅ Gemini AI connection verified successfully')
-      return text.length > 0
+      console.error('❌ All Gemini models failed connection test')
+      return false
     } catch (error) {
       console.error('❌ Gemini connection test failed:', error.message)
-      this.lastError = error.message
-      this.lastErrorTime = Date.now()
-      
-      // Handle specific error types with better messaging
-      if (error.message.includes('404') || error.message.includes('not found')) {
-        console.warn('⚠️ Gemini model not available - using fallback evaluation')
-        console.warn('💡 Try updating your Google AI SDK or check model availability')
-      } else if (error.message.includes('overloaded') || error.message.includes('503')) {
-        console.warn('⚠️ Gemini AI is temporarily overloaded - will use fallback evaluation')
-      } else if (error.message.includes('quota') || error.message.includes('429')) {
-        console.warn('⚠️ Gemini AI quota exceeded - using fallback mode')
-      } else if (error.message.includes('API key') || error.message.includes('401')) {
-        console.error('❌ Invalid Gemini API key - check your configuration')
-      } else {
-        console.warn('⚠️ Gemini AI temporarily unavailable - using fallback evaluation')
-      }
-      
       return false
     }
   }

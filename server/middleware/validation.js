@@ -6,9 +6,10 @@ import DOMPurify from 'isomorphic-dompurify'
 export const handleValidationErrors = (req, res, next) => {
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
+    const errorMessages = errors.array().map(err => err.msg)
     return res.status(400).json({
       success: false,
-      message: 'Validation failed',
+      message: errorMessages[0] || 'Validation failed',
       errors: errors.array()
     })
   }
@@ -33,15 +34,15 @@ export const isStrongPassword = (value) => {
   const hasLowerCase = /[a-z]/.test(value)
   const hasNumbers = /\d/.test(value)
   const hasNonalphas = /\W/.test(value)
-  
+
   if (value.length < minLength) {
     throw new Error('Password must be at least 8 characters long')
   }
-  
+
   if (!hasUpperCase || !hasLowerCase || !hasNumbers) {
     throw new Error('Password must contain uppercase, lowercase, and numeric characters')
   }
-  
+
   return true
 }
 

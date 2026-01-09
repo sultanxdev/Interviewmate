@@ -17,15 +17,15 @@ import { useInterview } from '../contexts/InterviewContext'
 import { useAuth } from '../contexts/AuthContext'
 import vapiService from '../services/vapi'
 import webSpeechService from '../services/webSpeechService'
-import { 
-  Mic, 
-  MicOff, 
-  Volume2, 
-  VolumeX, 
-  PhoneOff, 
-  Settings, 
-  Maximize, 
-  Minimize, 
+import {
+  Mic,
+  MicOff,
+  Volume2,
+  VolumeX,
+  PhoneOff,
+  Settings,
+  Maximize,
+  Minimize,
   Clock,
   Activity,
   Brain,
@@ -51,17 +51,17 @@ const LiveInterview = () => {
   const { id } = useParams()
   const navigate = useNavigate()
   const { user } = useAuth()
-  const { getInterview, updateInterview, evaluateInterview } = useInterview()
-  
+  const { getInterview, updateInterview, evaluateInterview, generateFollowUp } = useInterview()
+
   // Refs
   const timerRef = useRef(null)
   const transcriptRef = useRef(null)
-  
+
   // Core state
   const [interview, setInterview] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  
+
   // Interview session state
   const [sessionStatus, setSessionStatus] = useState('idle') // idle, initializing, active, paused, ended
   const [currentQuestion, setCurrentQuestion] = useState('')
@@ -72,17 +72,17 @@ const LiveInterview = () => {
   const [startTime, setStartTime] = useState(null)
   const [elapsedTime, setElapsedTime] = useState(0)
   const [remainingTime, setRemainingTime] = useState(0)
-  
+
   // Audio/Video controls
   const [isMuted, setIsMuted] = useState(false)
   const [isVolumeOn, setIsVolumeOn] = useState(true)
   const [isFullscreen, setIsFullscreen] = useState(false)
-  
+
   // UI state
   const [showTranscript, setShowTranscript] = useState(true)
   const [showSettings, setShowSettings] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
-  
+
   // Service state
   const [serviceMode, setServiceMode] = useState(null)
   const [serviceConnected, setServiceConnected] = useState(false)
@@ -105,10 +105,10 @@ const LiveInterview = () => {
         const now = Date.now()
         const elapsed = Math.floor((now - startTime) / 1000)
         const remaining = Math.max(0, (interview?.configuration?.duration * 60) - elapsed)
-        
+
         setElapsedTime(elapsed)
         setRemainingTime(remaining)
-        
+
         // Auto-end interview when time is up
         if (remaining === 0) {
           handleEndInterview()
@@ -144,18 +144,18 @@ const LiveInterview = () => {
     try {
       setLoading(true)
       setError(null)
-      
+
       const result = await getInterview(id)
-      
+
       if (result.success) {
         const interviewData = result.interview
         setInterview(interviewData)
         setServiceMode(interviewData.configuration.interviewMode)
         setRemainingTime(interviewData.configuration.duration * 60)
-        
+
         // Initialize questions
         await generateInitialQuestions(interviewData)
-        
+
         console.log('Interview loaded:', interviewData)
       } else {
         setError(result.message || 'Failed to load interview')
@@ -198,7 +198,7 @@ const LiveInterview = () => {
       const fallbackQuestions = generateFallbackQuestions(interviewData)
       setQuestions(fallbackQuestions)
       setCurrentQuestion(fallbackQuestions[0])
-      
+
     } catch (error) {
       console.error('Failed to generate questions:', error)
       const fallbackQuestions = generateFallbackQuestions(interviewData)
@@ -264,14 +264,14 @@ const LiveInterview = () => {
     try {
       setSessionStatus('initializing')
       setError(null)
-      
+
       // Initialize the appropriate service
       if (serviceMode === INTERVIEW_MODES.VAPI) {
         await initializeVapiService()
       } else {
         await initializeWebSpeechService()
       }
-      
+
       // Update interview status
       await updateInterview(id, {
         status: INTERVIEW_STATUS.IN_PROGRESS,
@@ -281,11 +281,11 @@ const LiveInterview = () => {
           recording: {}
         }
       })
-      
+
       setStartTime(Date.now())
       setSessionStatus('active')
       toast.success('Interview started!')
-      
+
     } catch (error) {
       console.error('Failed to start interview:', error)
       setError('Failed to start interview')
@@ -400,17 +400,17 @@ const LiveInterview = () => {
   const askQuestion = async (question) => {
     try {
       setIsProcessing(true)
-      
+
       if (serviceMode === INTERVIEW_MODES.VAPI) {
         // VAPI handles questions automatically
         return
       } else {
         // Use Web Speech TTS
         await webSpeechService.speak(question)
-        
+
         // Add to transcript
         addToTranscript('assistant', question)
-        
+
         // Start listening for response
         webSpeechService.startListening()
       }
@@ -426,28 +426,54 @@ const LiveInterview = () => {
    * Handle user response (Web Speech mode)
    */
   const handleUserResponse = async (response) => {
-    if (!response.trim()) return
+    if (!response?.trim() || isProcessing) return
 
     try {
+      setIsProcessing(true)
       // Add user response to transcript
       addToTranscript('user', response)
-      
-      // Move to next question or generate follow-up
+
+      // Generate follow-up using AI
+      const followUpResult = await generateFollowUp(response, currentQuestion)
+
+      if (followUpResult.success && !followUpResult.shouldProceed && followUpResult.followUp) {
+        // AI returned a follow-up question
+        toast.success('Interesting point! Let\'s dig deeper.')
+        setCurrentQuestion(followUpResult.followUp)
+
+        // Wait a bit then ask follow-up
+        setTimeout(() => {
+          askQuestion(followUpResult.followUp)
+        }, 1500)
+      } else {
+        // Move to next question
+        const nextIndex = questionIndex + 1
+        if (nextIndex < questions.length) {
+          setQuestionIndex(nextIndex)
+          setCurrentQuestion(questions[nextIndex])
+
+          // Ask next question after a brief pause
+          setTimeout(() => {
+            askQuestion(questions[nextIndex])
+          }, 2000)
+        } else {
+          // Interview completed
+          handleEndInterview()
+        }
+      }
+    } catch (error) {
+      console.error('Failed to handle user response:', error)
+      // Fallback: just move to next question
       const nextIndex = questionIndex + 1
       if (nextIndex < questions.length) {
         setQuestionIndex(nextIndex)
         setCurrentQuestion(questions[nextIndex])
-        
-        // Ask next question after a brief pause
-        setTimeout(() => {
-          askQuestion(questions[nextIndex])
-        }, 2000)
+        setTimeout(() => askQuestion(questions[nextIndex]), 2000)
       } else {
-        // Interview completed
         handleEndInterview()
       }
-    } catch (error) {
-      console.error('Failed to handle user response:', error)
+    } finally {
+      setIsProcessing(false)
     }
   }
 
@@ -474,10 +500,10 @@ const LiveInterview = () => {
       timestamp,
       id: Date.now() + Math.random()
     }
-    
+
     setTranscriptHistory(prev => [...prev, entry])
     setTranscript('') // Clear interim transcript
-    
+
     // Auto-scroll transcript
     setTimeout(() => {
       if (transcriptRef.current) {
@@ -492,7 +518,7 @@ const LiveInterview = () => {
   const handleMuteToggle = () => {
     const newMutedState = !isMuted
     setIsMuted(newMutedState)
-    
+
     if (serviceMode === INTERVIEW_MODES.VAPI) {
       vapiService.setMuted(newMutedState)
     } else {
@@ -506,7 +532,7 @@ const LiveInterview = () => {
   const handleVolumeToggle = () => {
     const newVolumeState = !isVolumeOn
     setIsVolumeOn(newVolumeState)
-    
+
     if (serviceMode === INTERVIEW_MODES.WEB_SPEECH) {
       webSpeechService.setVolume(newVolumeState ? 1 : 0)
     }
@@ -539,7 +565,7 @@ const LiveInterview = () => {
       const nextIndex = questionIndex + 1
       setQuestionIndex(nextIndex)
       setCurrentQuestion(questions[nextIndex])
-      
+
       if (serviceMode === INTERVIEW_MODES.WEB_SPEECH) {
         askQuestion(questions[nextIndex])
       }
@@ -552,15 +578,15 @@ const LiveInterview = () => {
   const handleEndInterview = async () => {
     try {
       setSessionStatus('ended')
-      
+
       // Stop services
       cleanup()
-      
+
       // Prepare final transcript
       const finalTranscript = transcriptHistory
         .map(entry => `${entry.role}: ${entry.text}`)
         .join('\n')
-      
+
       // Update interview with final data
       await updateInterview(id, {
         status: INTERVIEW_STATUS.COMPLETED,
@@ -571,13 +597,13 @@ const LiveInterview = () => {
           transcript: finalTranscript
         }
       })
-      
+
       // Start evaluation
       setIsProcessing(true)
       toast.success('Interview completed! Generating evaluation...')
-      
+
       const evaluationResult = await evaluateInterview(id, finalTranscript)
-      
+
       if (evaluationResult.success) {
         toast.success('Evaluation completed!')
         navigate(`/interview/report/${id}`)
@@ -585,7 +611,7 @@ const LiveInterview = () => {
         toast.error('Evaluation failed, but interview was saved')
         navigate(`/interview/report/${id}`)
       }
-      
+
     } catch (error) {
       console.error('Failed to end interview:', error)
       toast.error('Failed to save interview')
@@ -604,9 +630,9 @@ const LiveInterview = () => {
     } else if (serviceMode === INTERVIEW_MODES.WEB_SPEECH) {
       webSpeechService.cleanup()
     }
-    
+
     setServiceConnected(false)
-    
+
     if (timerRef.current) {
       clearInterval(timerRef.current)
       timerRef.current = null
@@ -632,7 +658,7 @@ const LiveInterview = () => {
       managerial: { name: 'Michael', title: 'Senior Manager', avatar: '👨‍💼' },
       custom: { name: 'Jordan', title: 'Interviewer', avatar: '👤' }
     }
-    
+
     return personas[interview?.type] || personas.custom
   }
 
@@ -687,7 +713,7 @@ const LiveInterview = () => {
               <span>{interview?.candidateInfo?.company}</span>
             </div>
           </div>
-          
+
           <div className="flex items-center space-x-4">
             {/* Timer */}
             <div className="flex items-center space-x-2 text-white">
@@ -696,20 +722,19 @@ const LiveInterview = () => {
                 {formatTime(elapsedTime)} / {formatTime(interview?.configuration?.duration * 60)}
               </span>
             </div>
-            
+
             {/* Progress */}
             <div className="flex items-center space-x-2 text-white">
               <BarChart3 className="w-4 h-4" />
               <span>{questionIndex + 1} / {questions.length}</span>
             </div>
-            
+
             {/* Status */}
-            <div className={`px-3 py-1 rounded-full text-xs font-medium ${
-              sessionStatus === 'active' ? 'bg-green-100 text-green-800' :
+            <div className={`px-3 py-1 rounded-full text-xs font-medium ${sessionStatus === 'active' ? 'bg-green-100 text-green-800' :
               sessionStatus === 'paused' ? 'bg-yellow-100 text-yellow-800' :
-              sessionStatus === 'ended' ? 'bg-red-100 text-red-800' :
-              'bg-gray-100 text-gray-800'
-            }`}>
+                sessionStatus === 'ended' ? 'bg-red-100 text-red-800' :
+                  'bg-gray-100 text-gray-800'
+              }`}>
               {sessionStatus.charAt(0).toUpperCase() + sessionStatus.slice(1)}
             </div>
           </div>
@@ -811,11 +836,10 @@ const LiveInterview = () => {
               <button
                 onClick={handleMuteToggle}
                 disabled={sessionStatus !== 'active' && sessionStatus !== 'paused'}
-                className={`p-3 rounded-full transition-colors ${
-                  isMuted 
-                    ? 'bg-red-600 hover:bg-red-700' 
-                    : 'bg-gray-600 hover:bg-gray-700'
-                } disabled:opacity-50 disabled:cursor-not-allowed`}
+                className={`p-3 rounded-full transition-colors ${isMuted
+                  ? 'bg-red-600 hover:bg-red-700'
+                  : 'bg-gray-600 hover:bg-gray-700'
+                  } disabled:opacity-50 disabled:cursor-not-allowed`}
               >
                 {isMuted ? (
                   <MicOff className="w-5 h-5 text-white" />
@@ -828,11 +852,10 @@ const LiveInterview = () => {
               <button
                 onClick={handleVolumeToggle}
                 disabled={sessionStatus !== 'active' && sessionStatus !== 'paused'}
-                className={`p-3 rounded-full transition-colors ${
-                  !isVolumeOn 
-                    ? 'bg-red-600 hover:bg-red-700' 
-                    : 'bg-gray-600 hover:bg-gray-700'
-                } disabled:opacity-50 disabled:cursor-not-allowed`}
+                className={`p-3 rounded-full transition-colors ${!isVolumeOn
+                  ? 'bg-red-600 hover:bg-red-700'
+                  : 'bg-gray-600 hover:bg-gray-700'
+                  } disabled:opacity-50 disabled:cursor-not-allowed`}
               >
                 {isVolumeOn ? (
                   <Volume2 className="w-5 h-5 text-white" />
@@ -911,19 +934,18 @@ const LiveInterview = () => {
                 <X className="w-4 h-4" />
               </button>
             </div>
-            
-            <div 
+
+            <div
               ref={transcriptRef}
               className="flex-1 overflow-y-auto p-4 space-y-3"
             >
               {transcriptHistory.map((entry) => (
                 <div
                   key={entry.id}
-                  className={`p-3 rounded-lg ${
-                    entry.role === 'assistant' 
-                      ? 'bg-blue-900/50 border-l-4 border-blue-500' 
-                      : 'bg-gray-700 border-l-4 border-green-500'
-                  }`}
+                  className={`p-3 rounded-lg ${entry.role === 'assistant'
+                    ? 'bg-blue-900/50 border-l-4 border-blue-500'
+                    : 'bg-gray-700 border-l-4 border-green-500'
+                    }`}
                 >
                   <div className="flex items-center space-x-2 mb-1">
                     {entry.role === 'assistant' ? (
@@ -938,7 +960,7 @@ const LiveInterview = () => {
                   <p className="text-white text-sm">{entry.text}</p>
                 </div>
               ))}
-              
+
               {/* Live transcript */}
               {transcript && (
                 <div className="p-3 rounded-lg bg-gray-700 border-l-4 border-yellow-500 opacity-75">
@@ -967,7 +989,7 @@ const LiveInterview = () => {
                 <X className="w-5 h-5" />
               </button>
             </div>
-            
+
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -977,7 +999,7 @@ const LiveInterview = () => {
                   {serviceMode === INTERVIEW_MODES.VAPI ? 'Pro Mode (VAPI)' : 'Lite Mode (Web Speech)'}
                 </p>
               </div>
-              
+
               <div>
                 <label className="flex items-center space-x-2">
                   <input

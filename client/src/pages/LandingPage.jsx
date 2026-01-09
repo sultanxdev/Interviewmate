@@ -20,6 +20,7 @@ import {
   FileText,
   MessageSquare,
   User,
+  Search,
 } from "lucide-react";
 
 const LandingPage = () => {
@@ -189,31 +190,31 @@ const LandingPage = () => {
       </header>
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-blue-50 via-white to-purple-50 py-20">
+      <section className="relative pt-20 pb-24 overflow-hidden">
+        {/* Background Decor */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full -z-10">
+          <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-brand-200/20 blur-[120px] rounded-full animate-pulse-slow"></div>
+          <div className="absolute bottom-[10%] right-[-10%] w-[30%] h-[30%] bg-accent-200/20 blur-[120px] rounded-full animate-pulse-slow delay-700"></div>
+        </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <div className="mb-8">
-              <span className="inline-flex items-center px-4 py-2 bg-blue-100 text-blue-800 rounded-full text-sm font-medium mb-4">
-                🚀 AI-Powered Interview Practice Platform
+          <div className="text-center max-w-4xl mx-auto">
+            <div className="mb-8 animate-fade-in">
+              <span className="inline-flex items-center px-4 py-1.5 rounded-full bg-brand-50 border border-brand-100 text-brand-700 text-sm font-bold shadow-soft">
+                <Zap className="w-4 h-4 mr-2 text-brand-500 fill-brand-500" />
+                The Future of Interview Prep
               </span>
             </div>
-            <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
-              Master Your Next
-              <span className="text-blue-600"> Interview</span>
-              <br />
-              <span className="text-3xl md:text-4xl text-gray-600">
-                with AI Confidence
-              </span>
+            <h1 className="text-6xl md:text-7xl font-black text-slate-900 mb-8 leading-[1.1] animate-slide-up">
+              Master Your Next <br />
+              <span className="gradient-text">Interview with AI</span>
             </h1>
-            <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed">
-              InterviewMate simulates real interviews through voice-based,
-              real-time conversations with AI interviewers. Get dynamic
-              questioning, instant feedback, and professional reports to ace
-              your next interview.
+            <p className="text-xl text-slate-600 mb-12 max-w-2xl mx-auto leading-relaxed animate-slide-up delay-100">
+              Transform your interview performance with realistic, voice-based AI simulations.
+              Get dynamic feedback and professional insights to land your dream job.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16 animate-slide-up delay-200">
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
@@ -222,38 +223,76 @@ const LandingPage = () => {
                     window.location.href = `/register?role=${encodeURIComponent(role)}`;
                   }
                 }}
-                className="flex flex-col sm:flex-row gap-4 w-full max-w-lg mx-auto"
+                className="flex flex-col sm:flex-row gap-3 w-full max-w-2xl bg-white p-2 rounded-2xl shadow-premium border border-slate-100 hover:border-brand-200 transition-all group"
               >
-                <input
-                  type="text"
-                  name="role"
-                  placeholder="Enter your target role (e.g. Product Manager)"
-                  className="flex-1 px-6 py-4 rounded-lg border-2 border-transparent focus:border-blue-500 focus:outline-none shadow-lg text-gray-900"
-                  required
-                />
+                <div className="flex-1 flex items-center px-4">
+                  <Search className="w-5 h-5 text-slate-400 mr-3 group-focus-within:text-brand-500 transition-colors" />
+                  <input
+                    type="text"
+                    name="role"
+                    placeholder="Role you're applying for (e.g. Frontend Developer)"
+                    className="w-full py-3 bg-transparent border-none focus:ring-0 text-slate-900 font-medium placeholder:text-slate-400"
+                    required
+                  />
+                </div>
                 <button
                   type="submit"
-                  className="inline-flex items-center px-8 py-4 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors shadow-lg whitespace-nowrap"
+                  className="btn-premium animate-shimmer"
                 >
-                  <Play className="mr-2 h-5 w-5" />
-                  Start Practice
+                  <Play className="mr-2 h-5 w-5 fill-current" />
+                  Start Practicing
                 </button>
               </form>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center space-y-2 sm:space-y-0 sm:space-x-6 text-sm text-gray-500">
-              <span className="flex items-center">
-                <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
-                No credit card required
-              </span>
-              <span className="flex items-center">
-                <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
-                30 free VAPI minutes
-              </span>
-              <span className="flex items-center">
-                <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
-                Unlimited Web Speech API
-              </span>
+            {/* Social Proof / Features Lite */}
+            <div className="flex flex-wrap items-center justify-center gap-x-12 gap-y-6 animate-fade-in delay-500 opacity-60 grayscale hover:grayscale-0 transition-all">
+              <div className="flex items-center space-x-2">
+                <CheckCircle className="w-5 h-5 text-emerald-500" />
+                <span className="font-bold text-slate-900">30 Free Mins</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <CheckCircle className="w-5 h-5 text-emerald-500" />
+                <span className="font-bold text-slate-900">No Credit Card</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <CheckCircle className="w-5 h-5 text-emerald-500" />
+                <span className="font-bold text-slate-900">Adaptive AI</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <CheckCircle className="w-5 h-5 text-emerald-500" />
+                <span className="font-bold text-slate-900">Voice-first</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Hero Image/Mockup Placeholder */}
+          <div className="mt-20 relative animate-slide-up delay-300">
+            <div className="absolute inset-0 bg-gradient-to-t from-[var(--background)] to-transparent z-10 h-40 bottom-0 pointer-events-none"></div>
+            <div className="card-premium h-[500px] overflow-hidden bg-slate-900 relative">
+              <div className="absolute top-0 left-0 w-full h-12 bg-slate-800 flex items-center px-6 border-b border-slate-700">
+                <div className="flex space-x-2">
+                  <div className="w-3 h-3 rounded-full bg-red-500/50"></div>
+                  <div className="w-3 h-3 rounded-full bg-yellow-500/50"></div>
+                  <div className="w-3 h-3 rounded-full bg-green-500/50"></div>
+                </div>
+                <div className="ml-8 px-4 py-1 bg-slate-700/50 rounded-lg text-[10px] text-slate-400 font-mono">interviewmate.io/interview/live</div>
+              </div>
+              <div className="p-12 flex items-center justify-center h-full">
+                <div className="text-center">
+                  <div className="w-24 h-24 bg-brand-500/20 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-brand-500/30 animate-float">
+                    <Mic className="w-10 h-10 text-brand-400" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-white mb-2">AI Interviewer is Listening...</h3>
+                  <p className="text-slate-400 max-w-md mx-auto">"Tell me about a time you had to deal with a difficult stakeholder and how you managed it?"</p>
+
+                  <div className="mt-12 flex justify-center space-x-4">
+                    {[1, 2, 3, 4, 5].map(i => (
+                      <div key={i} className={`w-1 bg-brand-500 rounded-full animate-pulse`} style={{ height: `${Math.random() * 40 + 20}px`, animationDelay: `${i * 0.1}s` }}></div>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -550,8 +589,8 @@ const LandingPage = () => {
               <div
                 key={index}
                 className={`relative bg-white p-8 rounded-2xl shadow-lg border-2 ${plan.popular
-                    ? "border-blue-500 ring-4 ring-blue-100"
-                    : "border-gray-200"
+                  ? "border-blue-500 ring-4 ring-blue-100"
+                  : "border-gray-200"
                   }`}
               >
                 {plan.popular && (
@@ -584,8 +623,8 @@ const LandingPage = () => {
                 <Link
                   to="/register"
                   className={`block w-full text-center py-3 px-6 rounded-lg font-semibold transition-colors ${plan.popular
-                      ? "bg-blue-600 text-white hover:bg-blue-700 shadow-lg"
-                      : "bg-gray-100 text-gray-900 hover:bg-gray-200"
+                    ? "bg-blue-600 text-white hover:bg-blue-700 shadow-lg"
+                    : "bg-gray-100 text-gray-900 hover:bg-gray-200"
                     }`}
                 >
                   {plan.cta}

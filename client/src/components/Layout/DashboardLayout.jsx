@@ -58,7 +58,7 @@ const DashboardLayout = ({ children }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-slate-50/50">
       {/* Mobile sidebar backdrop */}
       {sidebarOpen && (
         <div
@@ -69,9 +69,8 @@ const DashboardLayout = ({ children }) => {
 
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:fixed lg:inset-y-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
@@ -89,51 +88,56 @@ const DashboardLayout = ({ children }) => {
 
           {/* User info */}
           <div className="p-6 border-b border-gray-200">
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-3 p-1 rounded-2xl bg-slate-50 border border-slate-100 shadow-soft">
               <img
                 src={
                   user?.avatarUrl ||
                   `https://ui-avatars.com/api/?name=${encodeURIComponent(
                     user?.name || "User"
-                  )}&background=3b82f6&color=fff`
+                  )}&background=3b66f5&color=fff&bold=true`
                 }
                 alt={user?.name}
-                className="w-10 h-10 rounded-full"
+                className="w-10 h-10 rounded-xl"
               />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">
+              <div className="flex-1 min-w-0 pr-2">
+                <p className="text-xs font-bold text-slate-900 truncate uppercase tracking-wider">
                   {user?.name}
                 </p>
-                <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+                <div className="flex items-center text-[10px] text-slate-500 font-medium truncate">
+                  <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full mr-1.5 animate-pulse"></div>
+                  {user?.email}
+                </div>
               </div>
             </div>
 
             {/* Subscription info */}
-            <div className="mt-3 p-2 bg-gray-50 rounded-lg">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-gray-600">Plan:</span>
+            <div className="mt-4 p-3 bg-brand-50/50 border border-brand-100 rounded-xl">
+              <div className="flex items-center justify-between text-[11px] mb-2">
+                <span className="text-brand-600 font-bold uppercase tracking-tight">Active Plan</span>
                 <span
-                  className={`font-medium ${
-                    user?.subscription?.plan === "pro"
-                      ? "text-blue-600"
-                      : "text-gray-900"
-                  }`}
+                  className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase ${user?.subscription?.plan === "pro"
+                    ? "bg-brand-500 text-white"
+                    : "bg-slate-200 text-slate-600"
+                    }`}
                 >
                   {user?.subscription?.plan === "pro" ? "Pro" : "Free"}
                 </span>
               </div>
+              <div className="h-1 w-full bg-brand-100 rounded-full overflow-hidden mb-2">
+                <div className="h-full bg-brand-500 w-2/3"></div>
+              </div>
               {user?.subscription?.plan === "free" && (
-                <div className="flex items-center justify-between text-xs mt-1">
-                  <span className="text-gray-600">VAPI Minutes:</span>
-                  <span className="font-medium text-green-600">
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="text-slate-500 font-medium">VAPI Minutes</span>
+                  <span className="font-bold text-brand-700">
                     {user?.subscription?.vapiMinutesRemaining || 0}
                   </span>
                 </div>
               )}
               {user?.subscription?.plan === "pro" && (
-                <div className="flex items-center justify-between text-xs mt-1">
-                  <span className="text-gray-600">Balance:</span>
-                  <span className="font-medium text-green-600">
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="text-slate-500 font-medium">Balance</span>
+                  <span className="font-bold text-emerald-600">
                     ${(user?.subscription?.payAsYouGoBalance || 0).toFixed(2)}
                   </span>
                 </div>
@@ -142,19 +146,18 @@ const DashboardLayout = ({ children }) => {
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 px-4 py-6 space-y-1">
+          <nav className="flex-1 px-4 py-8 space-y-1 overflow-y-auto">
             {navigation.map((item) => (
               <Link
                 key={item.name}
                 to={item.href}
-                className={`flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                  isActive(item.href)
-                    ? "bg-blue-50 text-blue-700 border-r-2 border-blue-700"
-                    : "text-gray-700 hover:bg-gray-100"
-                }`}
+                className={`sidebar-link-v2 ${isActive(item.href)
+                  ? "sidebar-link-active-v2"
+                  : "sidebar-link-inactive-v2"
+                  }`}
                 onClick={() => setSidebarOpen(false)}
               >
-                <item.icon className="mr-3 h-5 w-5" />
+                <item.icon className={`mr-3 h-5 w-5 transition-colors ${isActive(item.href) ? 'text-brand-600' : 'text-slate-400'}`} />
                 {item.name}
               </Link>
             ))}
@@ -176,7 +179,7 @@ const DashboardLayout = ({ children }) => {
       {/* Main content */}
       <div className="lg:pl-64">
         {/* Top bar */}
-        <div className="sticky top-0 z-30 bg-white shadow-sm border-b border-gray-200">
+        <div className="sticky top-0 z-30 bg-white/70 backdrop-blur-md border-b border-slate-200">
           <div className="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
             <button
               onClick={() => setSidebarOpen(true)}
@@ -199,10 +202,10 @@ const DashboardLayout = ({ children }) => {
                     user?.avatarUrl ||
                     `https://ui-avatars.com/api/?name=${encodeURIComponent(
                       user?.name || "User"
-                    )}&background=3b82f6&color=fff`
+                    )}&background=3b66f5&color=fff&bold=true`
                   }
                   alt={user?.name}
-                  className="w-8 h-8 rounded-full cursor-pointer hover:ring-2 hover:ring-blue-500"
+                  className="w-8 h-8 rounded-lg cursor-pointer hover:ring-2 hover:ring-brand-500 transition-all border border-slate-200 shadow-soft"
                   onClick={() => navigate("/profile")}
                 />
               </div>

@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Backend server for InterviewMate AI interview practice platform",
   "type": "module",
-  "main": "server.js",
+  "main": "nodemon server.js",
   "scripts": {
     "dev": "nodemon server.js",
     "dev:safe": "node scripts/start.js",
@@ -16,8 +16,7 @@
     "kill-port": "node scripts/killPort.js"
   },
   "dependencies": {
-    "@google/generative-ai": "^0.24.1",
-    "bcrypt": "^6.0.0",
+    "@google/generative-ai": "^0.22.0",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
@@ -38,8 +37,7 @@
     "node-fetch": "^3.3.2",
     "nodemailer": "^6.10.1",
     "pdf-parse": "^2.4.5",
-    "razorpay": "^2.9.2",
-    "xss-clean": "^0.1.4"
+    "razorpay": "^2.9.2"
   },
   "devDependencies": {
     "jest": "^29.7.0",

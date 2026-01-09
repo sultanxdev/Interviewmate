@@ -35,12 +35,12 @@ checkDevelopmentSetup()
 const app = express()
 const PORT = process.env.PORT || 5001
 
-// Security middleware
-app.use(helmet())
-app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:3000',
-  credentials: true
-}))
+// Security & Safety middleware
+app.use(securityConfig.helmet)
+app.use(securityConfig.cors)
+app.use(ipSecurity)
+app.use(securityLogger)
+app.use(requestSizeLimit('10mb'))
 
 // Rate limiting
 const limiter = rateLimit({
@@ -53,6 +53,9 @@ app.use('/api/', limiter)
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true, limit: '10mb' }))
+
+// Sanitization middleware (applied after parsing)
+app.use(sanitizeAll)
 
 // Logging middleware
 if (process.env.NODE_ENV === 'development') {
@@ -92,11 +95,11 @@ const startServer = async () => {
   try {
     // Connect to database
     await connectDB()
-    
+
     // Initialize Gemini AI
     try {
       const initialized = geminiService.initialize()
-      
+
       if (initialized) {
         // Test Gemini connection
         const isGeminiWorking = await geminiService.testConnection()
@@ -111,7 +114,7 @@ const startServer = async () => {
     } catch (error) {
       console.log('⚠️ Gemini AI initialization failed - using fallback evaluation:', error.message)
     }
-    
+
     // Start HTTP server
     const server = app.listen(PORT, () => {
       console.log(`🚀 Server running on port ${PORT}`)

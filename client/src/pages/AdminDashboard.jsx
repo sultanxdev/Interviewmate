@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
+import { apiService, handleApiResponse } from "../services/api";
 import DashboardLayout from "../components/Layout/DashboardLayout";
 import LoadingSpinner from "../components/LoadingSpinner";
 import {
@@ -66,12 +67,9 @@ const AdminDashboard = () => {
   });
   const [recentUsers, setRecentUsers] = useState([]);
   const [recentInterviews, setRecentInterviews] = useState([]);
-  const [systemHealth, setSystemHealth] = useState({
-    database: "healthy",
-    geminiAI: "healthy",
-    vapiService: "warning",
-    paymentGateway: "healthy",
-  });
+  const [systemHealth, setSystemHealth] = useState(null);
+  const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0 });
+  const [filters, setFilters] = useState({ search: "", plan: "", type: "", status: "" });
 
   useEffect(() => {
     // Check if user is admin
@@ -87,117 +85,65 @@ const AdminDashboard = () => {
     try {
       setLoading(true);
 
-      // Simulate API calls for admin data
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      setStats({
-        totalUsers: 2847,
-        totalInterviews: 8934,
-        totalRevenue: 45230,
-        activeUsers: 234,
-        freeUsers: 2103,
-        proUsers: 744,
-        vapiMinutesUsed: 15420,
-        webSpeechMinutesUsed: 89340,
-      });
-
-      setRecentUsers([
-        {
-          id: 1,
-          name: "John Doe",
-          email: "john@example.com",
-          plan: "pro",
-          joinedAt: "2024-01-15",
-          status: "active",
-        },
-        {
-          id: 2,
-          name: "Jane Smith",
-          email: "jane@example.com",
-          plan: "free",
-          joinedAt: "2024-01-14",
-          status: "active",
-        },
-        {
-          id: 3,
-          name: "Mike Johnson",
-          email: "mike@example.com",
-          plan: "pro",
-          joinedAt: "2024-01-13",
-          status: "inactive",
-        },
-        {
-          id: 4,
-          name: "Sarah Wilson",
-          email: "sarah@example.com",
-          plan: "free",
-          joinedAt: "2024-01-12",
-          status: "active",
-        },
-        {
-          id: 5,
-          name: "David Brown",
-          email: "david@example.com",
-          plan: "pro",
-          joinedAt: "2024-01-11",
-          status: "active",
-        },
+      const [analyticsRes, healthRes] = await Promise.all([
+        handleApiResponse(() => apiService.admin.getAnalytics()),
+        handleApiResponse(() => apiService.admin.getHealth())
       ]);
 
-      setRecentInterviews([
-        {
-          id: 1,
-          user: "John Doe",
-          type: "technical",
-          score: 85,
-          duration: 25,
-          createdAt: "2024-01-15T10:30:00Z",
-        },
-        {
-          id: 2,
-          user: "Jane Smith",
-          type: "hr",
-          score: 78,
-          duration: 20,
-          createdAt: "2024-01-15T09:15:00Z",
-        },
-        {
-          id: 3,
-          user: "Mike Johnson",
-          type: "managerial",
-          score: 92,
-          duration: 30,
-          createdAt: "2024-01-14T16:45:00Z",
-        },
-        {
-          id: 4,
-          user: "Sarah Wilson",
-          type: "technical",
-          score: 67,
-          duration: 18,
-          createdAt: "2024-01-14T14:20:00Z",
-        },
-        {
-          id: 5,
-          user: "David Brown",
-          type: "hr",
-          score: 89,
-          duration: 22,
-          createdAt: "2024-01-14T11:30:00Z",
-        },
-      ]);
+      if (analyticsRes.success) {
+        const { overview, interviewStats, dailyRegistrations, dailyInterviews, topUsers } = analyticsRes.data.analytics;
+        setStats({
+          totalUsers: overview.totalUsers,
+          totalInterviews: overview.totalInterviews,
+          totalRevenue: overview.totalRevenue,
+          activeUsers: overview.activeUsers,
+          proUsers: overview.proUsers,
+          freeUsers: overview.totalUsers - overview.proUsers,
+          vapiMinutesUsed: 0,
+          webSpeechMinutesUsed: 0
+        });
+        setRecentUsers(topUsers);
+      }
 
-      setSystemHealth({
-        database: "healthy",
-        geminiAI: "healthy",
-        vapiService: "warning",
-        paymentGateway: "healthy",
-      });
+      if (healthRes.success) {
+        setSystemHealth(healthRes.data.health);
+      }
+
+      fetchUsers();
+      fetchInterviews();
+
     } catch (error) {
       console.error("Failed to fetch admin data:", error);
       toast.error("Failed to load admin data");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchUsers = async (page = 1) => {
+    try {
+      const result = await handleApiResponse(() =>
+        apiService.admin.getUsers({ page, search: filters.search, plan: filters.plan })
+      );
+      if (result.success) {
+        setRecentUsers(result.data.users);
+        setPagination(result.data.pagination);
+      }
+    } catch (error) {
+      toast.error("Failed to fetch users");
+    }
+  };
+
+  const fetchInterviews = async (page = 1) => {
+    try {
+      const result = await handleApiResponse(() =>
+        apiService.admin.getInterviews({ page, type: filters.type, status: filters.status })
+      );
+      if (result.success) {
+        setRecentInterviews(result.data.interviews);
+      }
+    } catch (error) {
+      toast.error("Failed to fetch interviews");
     }
   };
 
@@ -323,11 +269,10 @@ const AdminDashboard = () => {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center py-2 px-1 border-b-2 font-medium text-sm ${
-                    activeTab === tab.id
-                      ? "border-blue-500 text-blue-600"
-                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                  }`}
+                  className={`flex items-center py-2 px-1 border-b-2 font-medium text-sm ${activeTab === tab.id
+                    ? "border-blue-500 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                    }`}
                 >
                   <tab.icon className="w-4 h-4 mr-2" />
                   {tab.name}
@@ -506,20 +451,18 @@ const AdminDashboard = () => {
                         </div>
                         <div className="flex items-center space-x-2">
                           <span
-                            className={`px-2 py-1 text-xs font-medium rounded-full ${
-                              user.plan === "pro"
-                                ? "bg-green-100 text-green-800"
-                                : "bg-gray-100 text-gray-800"
-                            }`}
+                            className={`px-2 py-1 text-xs font-medium rounded-full ${user.plan === "pro"
+                              ? "bg-green-100 text-green-800"
+                              : "bg-gray-100 text-gray-800"
+                              }`}
                           >
                             {user.plan}
                           </span>
                           <span
-                            className={`w-2 h-2 rounded-full ${
-                              user.status === "active"
-                                ? "bg-green-500"
-                                : "bg-gray-400"
-                            }`}
+                            className={`w-2 h-2 rounded-full ${user.status === "active"
+                              ? "bg-green-500"
+                              : "bg-gray-400"
+                              }`}
                           ></span>
                         </div>
                       </div>
@@ -549,13 +492,12 @@ const AdminDashboard = () => {
                         </div>
                         <div className="text-right">
                           <p
-                            className={`text-sm font-medium ${
-                              interview.score >= 80
-                                ? "text-green-600"
-                                : interview.score >= 60
+                            className={`text-sm font-medium ${interview.score >= 80
+                              ? "text-green-600"
+                              : interview.score >= 60
                                 ? "text-yellow-600"
                                 : "text-red-600"
-                            }`}
+                              }`}
                           >
                             {interview.score}%
                           </p>

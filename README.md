@@ -16,11 +16,11 @@ It helps candidates practice HR, technical, and managerial interviews with insta
 
 ## Current Status
 
-- Product scope and feature set defined  
-- System architecture and data models designed  
-- Core interview flow implemented  
-- Advanced AI evaluation and reporting in progress  
-- Not production-ready  
+- Product scope and features fully implemented
+- System architecture and data models verified
+- Core interview flow with adaptive questioning enabled
+- Advanced AI evaluation and professional reporting finalized
+- Stable and ready for beta testing
 
 ---
 
@@ -46,14 +46,14 @@ InterviewMate provides a realistic, AI-driven interview experience to:
 
 ## Key Features (Planned & In Progress)
 
-- AI-powered mock interviews (HR, Technical, Managerial)  
-- Voice-based real-time interview sessions  
-- Adaptive questioning and cross-questioning  
-- Resume and job description–aware interviews  
-- AI-generated evaluation and scoring  
-- Professional PDF interview reports  
-- Interview history and performance tracking  
-- Subscription-based minute usage system  
+- AI-powered mock interviews (HR, Technical, Managerial, Custom)
+- Voice-based real-time interview sessions (VAPI & Web Speech)
+- Adaptive questioning and intelligent follow-up generation
+- Resume and job description–aware tailored interviews
+- AI-generated objective evaluation and scoring
+- Professional PDF interview reports with Puppeteer
+- Detailed interview history and analytics dashboard
+- Subscription-based minute usage and payment system
 
 ---
 
@@ -76,7 +76,7 @@ Design goals:
 - **Auth:** JWT + Google OAuth  
 - **Payments:** Razorpay  
 - **Real-time:** WebSockets  
-- **PDF Reports:** jsPDF  
+- **PDF Reports:** HTML Templates + Puppeteer (A4 Professional Formatting)
 
 ---
 

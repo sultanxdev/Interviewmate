@@ -1,6 +1,8 @@
 import fs from 'fs'
 import path from 'path'
-import pdf from 'pdf-parse'
+import { createRequire } from 'module'
+const require = createRequire(import.meta.url)
+const pdf = require('pdf-parse')
 import mammoth from 'mammoth'
 import geminiService from '../config/gemini.js'
 
@@ -78,21 +80,24 @@ Please extract and return ONLY a valid JSON object with the following structure:
     "name": "Full Name",
     "email": "email@example.com",
     "phone": "phone number",
-    "location": "city, country"
+    "location": "city, country",
+    "linkedin": "url",
+    "github": "url"
   },
   "summary": "Professional summary or objective",
   "skills": {
-    "technical": ["skill1", "skill2", "skill3"],
+    "technical": ["skill1", "skill2 (with versions if available)"],
     "soft": ["skill1", "skill2"],
     "tools": ["tool1", "tool2"],
-    "languages": ["language1", "language2"]
+    "frameworks": ["react", "node.js", etc.],
+    "languages": ["JavaScript", "Python", etc.]
   },
   "experience": [
     {
       "title": "Job Title",
       "company": "Company Name",
       "duration": "Start - End",
-      "description": "Brief description",
+      "description": "DETAILED list of achievements and responsibilities",
       "technologies": ["tech1", "tech2"]
     }
   ],
@@ -107,9 +112,10 @@ Please extract and return ONLY a valid JSON object with the following structure:
   "projects": [
     {
       "name": "Project Name",
-      "description": "Project description",
+      "description": "DETAILED description including problem solved and results",
       "technologies": ["tech1", "tech2"],
-      "url": "project url if available"
+      "url": "project url if available",
+      "keyFeatures": ["feature1", "feature2"]
     }
   ],
   "certifications": ["cert1", "cert2"],
@@ -145,13 +151,16 @@ Return ONLY the JSON object, no additional text.
         name: data.personalInfo?.name || null,
         email: data.personalInfo?.email || null,
         phone: data.personalInfo?.phone || null,
-        location: data.personalInfo?.location || null
+        location: data.personalInfo?.location || null,
+        linkedin: data.personalInfo?.linkedin || null,
+        github: data.personalInfo?.github || null
       },
       summary: data.summary || null,
       skills: {
         technical: Array.isArray(data.skills?.technical) ? data.skills.technical : [],
         soft: Array.isArray(data.skills?.soft) ? data.skills.soft : [],
         tools: Array.isArray(data.skills?.tools) ? data.skills.tools : [],
+        frameworks: Array.isArray(data.skills?.frameworks) ? data.skills.frameworks : [],
         languages: Array.isArray(data.skills?.languages) ? data.skills.languages : []
       },
       experience: Array.isArray(data.experience) ? data.experience.map(exp => ({
@@ -171,7 +180,8 @@ Return ONLY the JSON object, no additional text.
         name: proj.name || 'Unnamed Project',
         description: proj.description || '',
         technologies: Array.isArray(proj.technologies) ? proj.technologies : [],
-        url: proj.url || null
+        url: proj.url || null,
+        keyFeatures: Array.isArray(proj.keyFeatures) ? proj.keyFeatures : []
       })) : [],
       certifications: Array.isArray(data.certifications) ? data.certifications : [],
       keywords: Array.isArray(data.keywords) ? data.keywords : []
@@ -218,20 +228,22 @@ Return ONLY the JSON object, no additional text.
       ).join(', ')
 
       const prompt = `
-Based on this candidate's resume, generate 5 relevant ${interviewType} interview questions:
+Based on this candidate's resume, generate 5 relevant ${interviewType} interview questions.
 
 CANDIDATE PROFILE:
 - Skills: ${skills}
 - Experience: ${experience}
-- Projects: ${resumeData.projects.map(p => p.name).join(', ')}
+- Projects: ${resumeData.projects.map(p => `${p.name}: ${p.description}`).join(' | ')}
 
 Generate questions that:
-1. Test their claimed skills and experience
-2. Are appropriate for ${interviewType} interviews
-3. Reference specific technologies/projects from their resume
-4. Vary in difficulty from basic to advanced
+1. Deep-dive into specific projects mentioned, asking about their architecture or technical choices.
+2. Test their proficiency in the claimed skills (${skills}).
+3. Are appropriate for ${interviewType} interviews.
+4. Scale in complexity (e.g., 2 easy, 2 medium, 1 hard).
 
-Return as JSON array: [{"question": "...", "focus": "skill/experience area"}]
+Each question MUST include a "suggestedAnswerPoints" field for better evaluation later.
+
+Return as JSON array: [{"question": "...", "focus": "skill/experience area", "suggestedAnswerPoints": ["point1", "point2"]}]
 `
 
       const response = await geminiService.generateContent(prompt)

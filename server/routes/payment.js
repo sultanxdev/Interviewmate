@@ -14,9 +14,9 @@ let razorpay = null
 const razorpayKeyId = process.env.RAZORPAY_KEY_ID
 const razorpayKeySecret = process.env.RAZORPAY_KEY_SECRET
 
-if (razorpayKeyId && razorpayKeySecret && 
-    razorpayKeyId !== 'rzp_test_your_key_id_here' && 
-    razorpayKeySecret !== 'your_key_secret_here') {
+if (razorpayKeyId && razorpayKeySecret &&
+  razorpayKeyId !== 'rzp_test_your_key_id_here' &&
+  razorpayKeySecret !== 'your_key_secret_here') {
   try {
     razorpay = new Razorpay({
       key_id: razorpayKeyId,
@@ -152,7 +152,7 @@ router.post('/verify', protect, [
     // Get order details from Razorpay
     const order = await razorpay.orders.fetch(razorpay_order_id)
     const amount = order.amount / 100 // Convert from paise to rupees
-    
+
     // Create payment record
     const payment = await Payment.create({
       userId: req.user.id,
@@ -173,7 +173,7 @@ router.post('/verify', protect, [
 
     // Calculate minutes to add (assuming $0.50 per minute for VAPI)
     const minutesToAdd = Math.floor(amount * 2) // $1 = 2 minutes
-    
+
     // Add credit to ledger
     await Ledger.addCredit(
       req.user.id,
@@ -194,7 +194,7 @@ router.post('/verify', protect, [
       razorpayPaymentId: razorpay_payment_id,
       status: 'completed'
     }
-    
+
     await user.save()
 
     // Update payment record with minutes added
@@ -235,7 +235,7 @@ router.post('/webhook', async (req, res, next) => {
         })
       }
     }
-    
+
     // Always verify signature if webhook secret is configured
     if (process.env.RAZORPAY_WEBHOOK_SECRET && process.env.RAZORPAY_WEBHOOK_SECRET !== 'whsec_your_webhook_secret_here') {
       const expectedSignature = crypto
@@ -268,15 +268,15 @@ router.post('/webhook', async (req, res, next) => {
       case 'payment.captured':
         await handlePaymentCaptured(event.payload.payment.entity)
         break
-      
+
       case 'payment.failed':
         await handlePaymentFailed(event.payload.payment.entity)
         break
-      
+
       case 'subscription.cancelled':
         await handleSubscriptionCancelled(event.payload.subscription.entity)
         break
-      
+
       default:
         console.log(`Unhandled webhook event: ${event.event}`)
     }
@@ -343,9 +343,9 @@ async function handleSubscriptionCancelled(subscription) {
 // @access  Private
 router.get('/history', protect, async (req, res, next) => {
   try {
-    // In a real application, you would have a Payment model
-    // For now, return empty array
-    const payments = []
+    const payments = await Payment.find({ userId: req.user.id })
+      .sort({ createdAt: -1 })
+      .limit(50)
 
     res.status(200).json({
       success: true,

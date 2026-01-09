@@ -37,7 +37,7 @@ class WebSpeechService {
       // Initialize Speech Recognition
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
       this.recognition = new SpeechRecognition()
-      
+
       this.recognition.continuous = true
       this.recognition.interimResults = true
       this.recognition.lang = 'en-US'
@@ -68,8 +68,10 @@ class WebSpeechService {
 
     this.recognition.onend = () => {
       this.isListening = false
-      this.callbacks.onSpeechEnd?.()
-      
+      // Pass the last transcript if available
+      this.callbacks.onSpeechEnd?.(this.lastTranscript || '')
+      this.lastTranscript = '' // Clear for next session
+
       // Restart recognition if still in interview mode and not manually stopped
       if (this.isInitialized && this.interviewData && !this.manualStop) {
         setTimeout(() => {
@@ -104,19 +106,20 @@ class WebSpeechService {
 
       // Process final transcript
       if (finalTranscript.trim()) {
+        this.lastTranscript = finalTranscript.trim()
         this.callbacks.onTranscript?.({
           role: 'user',
           text: finalTranscript,
           isFinal: true
         })
-        
+
         this.processUserResponse(finalTranscript.trim())
       }
     }
 
     this.recognition.onerror = (event) => {
       console.error('Speech recognition error:', event.error)
-      
+
       // Handle specific errors gracefully
       if (event.error === 'no-speech') {
         console.log('No speech detected, continuing...')
@@ -178,7 +181,7 @@ class WebSpeechService {
     try {
       const prompt = this.buildQuestionGenerationPrompt()
       const response = await geminiService.generateQuestions(prompt)
-      
+
       if (response && response.questions) {
         this.questions = response.questions
       } else {
@@ -254,7 +257,7 @@ Generate engaging, relevant questions that test both technical knowledge and sof
     }
 
     const question = this.questions[this.currentQuestionIndex]
-    
+
     // Add to conversation history
     this.conversationHistory.push({
       role: 'interviewer',
@@ -289,7 +292,7 @@ Generate engaging, relevant questions that test both technical knowledge and sof
     // Generate follow-up or next question using Gemini
     try {
       const followUp = await this.generateFollowUp(response)
-      
+
       if (followUp && followUp.trim()) {
         // Add follow-up to conversation
         this.conversationHistory.push({
@@ -306,7 +309,7 @@ Generate engaging, relevant questions that test both technical knowledge and sof
 
         // Speak follow-up
         await this.speakText(followUp)
-        
+
         // Wait a moment then ask next question
         setTimeout(() => {
           this.askNextQuestion()
@@ -357,7 +360,7 @@ Keep it conversational and natural.`
         this.synthesis.cancel()
 
         const utterance = new SpeechSynthesisUtterance(text)
-        
+
         // Configure voice settings
         utterance.rate = 0.9
         utterance.pitch = 1.0
@@ -365,12 +368,12 @@ Keep it conversational and natural.`
 
         // Try to use a professional voice
         const voices = this.synthesis.getVoices()
-        const preferredVoice = voices.find(voice => 
-          voice.name.includes('Google') || 
+        const preferredVoice = voices.find(voice =>
+          voice.name.includes('Google') ||
           voice.name.includes('Microsoft') ||
           voice.lang.startsWith('en')
         )
-        
+
         if (preferredVoice) {
           utterance.voice = preferredVoice
         }
@@ -437,6 +440,19 @@ Keep it conversational and natural.`
     this.currentUtterance = null
   }
 
+  // Set volume for TTS
+  setVolume(volume) {
+    if (this.currentUtterance) {
+      this.currentUtterance.volume = volume
+    }
+    this.volume = volume
+  }
+
+  // Alias for speakText for compatibility
+  async speak(text) {
+    return this.speakText(text)
+  }
+
   // Stop method for compatibility
   stop() {
     this.stopListening()
@@ -447,7 +463,7 @@ Keep it conversational and natural.`
   async endInterview() {
     try {
       const closingMessage = "Thank you for your time. The interview is now complete. You'll receive your detailed feedback report shortly."
-      
+
       this.callbacks.onTranscript?.({
         role: 'interviewer',
         text: closingMessage,
@@ -455,11 +471,11 @@ Keep it conversational and natural.`
       })
 
       await this.speakText(closingMessage)
-      
+
       // Stop all speech processes
       this.stopListening()
       this.stopSpeaking()
-      
+
     } catch (error) {
       console.error('Error ending interview:', error)
     }
@@ -479,8 +495,8 @@ Keep it conversational and natural.`
 
   // Check if browser supports Web Speech API
   static isSupported() {
-    return ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) && 
-           ('speechSynthesis' in window)
+    return ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) &&
+      ('speechSynthesis' in window)
   }
 
   // Cleanup resources
@@ -488,7 +504,7 @@ Keep it conversational and natural.`
     this.manualStop = true
     this.stopListening()
     this.stopSpeaking()
-    
+
     // Clear all timeouts to prevent memory leaks
     const timeouts = [this.questionTimeout, this.followUpTimeout, this.restartTimeout]
     timeouts.forEach(timeout => {
@@ -496,12 +512,12 @@ Keep it conversational and natural.`
         clearTimeout(timeout)
       }
     })
-    
+
     // Reset timeout references
     this.questionTimeout = null
     this.followUpTimeout = null
     this.restartTimeout = null
-    
+
     // Remove all event listeners from recognition
     if (this.recognition) {
       this.recognition.onstart = null
@@ -515,7 +531,7 @@ Keep it conversational and natural.`
       this.recognition.onaudioend = null
       this.recognition.onsoundstart = null
       this.recognition.onsoundend = null
-      
+
       // Stop and nullify recognition
       try {
         this.recognition.stop()
@@ -524,13 +540,13 @@ Keep it conversational and natural.`
       }
       this.recognition = null
     }
-    
+
     // Clear speech synthesis
     if (this.currentUtterance) {
       speechSynthesis.cancel()
       this.currentUtterance = null
     }
-    
+
     // Reset all state
     this.isInitialized = false
     this.isListening = false

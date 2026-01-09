@@ -1,5 +1,5 @@
 import mongoSanitize from 'express-mongo-sanitize'
-import xss from 'xss-clean'
+import DOMPurify from 'isomorphic-dompurify'
 import hpp from 'hpp'
 
 // MongoDB injection prevention
@@ -10,12 +10,26 @@ export const mongoSanitizeMiddleware = mongoSanitize({
   }
 })
 
-// XSS protection
-export const xssMiddleware = xss({
-  whiteList: {}, // No HTML tags allowed
-  stripIgnoreTag: true,
-  stripIgnoreTagBody: ['script']
-})
+// XSS protection using DOMPurify
+export const xssMiddleware = (req, res, next) => {
+  const sanitizeValue = (value) => {
+    if (typeof value === 'string') {
+      return DOMPurify.sanitize(value)
+    }
+    if (typeof value === 'object' && value !== null) {
+      Object.keys(value).forEach(key => {
+        value[key] = sanitizeValue(value[key])
+      })
+    }
+    return value
+  }
+
+  if (req.body) req.body = sanitizeValue(req.body)
+  if (req.query) req.query = sanitizeValue(req.query)
+  if (req.params) req.params = sanitizeValue(req.params)
+
+  next()
+}
 
 // HTTP Parameter Pollution prevention
 export const hppMiddleware = hpp({
@@ -71,12 +85,12 @@ export const validateFileUpload = (req, res, next) => {
   }
 
   const files = req.files ? Object.values(req.files).flat() : [req.file]
-  
+
   for (const file of files) {
     // Check filename for path traversal
-    if (file.originalname.includes('..') || 
-        file.originalname.includes('/') || 
-        file.originalname.includes('\\')) {
+    if (file.originalname.includes('..') ||
+      file.originalname.includes('/') ||
+      file.originalname.includes('\\')) {
       return res.status(400).json({
         success: false,
         message: 'Invalid filename detected'
@@ -88,7 +102,7 @@ export const validateFileUpload = (req, res, next) => {
       '.exe', '.bat', '.cmd', '.com', '.pif', '.scr', '.vbs', '.js', '.jar',
       '.php', '.asp', '.aspx', '.jsp', '.sh', '.ps1', '.py', '.rb'
     ]
-    
+
     const fileExt = file.originalname.toLowerCase().split('.').pop()
     if (dangerousExtensions.includes(`.${fileExt}`)) {
       return res.status(400).json({

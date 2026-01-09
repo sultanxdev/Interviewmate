@@ -1,6 +1,6 @@
 import helmet from 'helmet'
 import mongoSanitize from 'express-mongo-sanitize'
-import xss from 'xss-clean'
+import DOMPurify from 'isomorphic-dompurify'
 import hpp from 'hpp'
 import cors from 'cors'
 
@@ -36,10 +36,10 @@ export const securityConfig = {
   cors: cors({
     origin: function (origin, callback) {
       const allowedOrigins = (process.env.ALLOWED_ORIGINS || process.env.CLIENT_URL || 'http://localhost:5173').split(',')
-      
+
       // Allow requests with no origin (mobile apps, etc.)
       if (!origin) return callback(null, true)
-      
+
       if (allowedOrigins.indexOf(origin) !== -1) {
         callback(null, true)
       } else {
@@ -60,12 +60,26 @@ export const securityConfig = {
     }
   }),
 
-  // XSS protection
-  xss: xss({
-    whiteList: {}, // No HTML tags allowed
-    stripIgnoreTag: true,
-    stripIgnoreTagBody: ['script']
-  }),
+  // XSS protection using DOMPurify
+  xss: (req, res, next) => {
+    const sanitizeValue = (value) => {
+      if (typeof value === 'string') {
+        return DOMPurify.sanitize(value)
+      }
+      if (typeof value === 'object' && value !== null) {
+        Object.keys(value).forEach(key => {
+          value[key] = sanitizeValue(value[key])
+        })
+      }
+      return value
+    }
+
+    if (req.body) req.body = sanitizeValue(req.body)
+    if (req.query) req.query = sanitizeValue(req.query)
+    if (req.params) req.params = sanitizeValue(req.params)
+
+    next()
+  },
 
   // HTTP Parameter Pollution protection
   hpp: hpp({
@@ -76,7 +90,7 @@ export const securityConfig = {
 // Request logging middleware for security monitoring
 export const securityLogger = (req, res, next) => {
   const startTime = Date.now()
-  
+
   // Log suspicious patterns
   const suspiciousPatterns = [
     /(\<script\>|\<\/script\>)/gi,
@@ -92,7 +106,7 @@ export const securityLogger = (req, res, next) => {
   })
 
   const isSuspicious = suspiciousPatterns.some(pattern => pattern.test(requestData))
-  
+
   if (isSuspicious) {
     console.warn(`🚨 Suspicious request detected from ${req.ip}:`, {
       method: req.method,
@@ -107,11 +121,11 @@ export const securityLogger = (req, res, next) => {
   // Log response time and status
   res.on('finish', () => {
     const duration = Date.now() - startTime
-    
+
     if (duration > 5000) { // Log slow requests
       console.warn(`⏱️ Slow request: ${req.method} ${req.originalUrl} - ${duration}ms`)
     }
-    
+
     if (res.statusCode >= 400) { // Log error responses
       console.warn(`❌ Error response: ${res.statusCode} for ${req.method} ${req.originalUrl}`)
     }
@@ -123,10 +137,10 @@ export const securityLogger = (req, res, next) => {
 // IP-based rate limiting and blocking
 export const ipSecurity = (req, res, next) => {
   const clientIP = req.ip || req.connection.remoteAddress
-  
+
   // Block known malicious IPs (you would maintain this list)
   const blockedIPs = process.env.BLOCKED_IPS ? process.env.BLOCKED_IPS.split(',') : []
-  
+
   if (blockedIPs.includes(clientIP)) {
     console.warn(`🚫 Blocked IP attempted access: ${clientIP}`)
     return res.status(403).json({
@@ -144,7 +158,7 @@ export const ipSecurity = (req, res, next) => {
 export const requestSizeLimit = (maxSize = '10mb') => {
   return (req, res, next) => {
     const contentLength = parseInt(req.get('Content-Length') || '0')
-    const maxBytes = typeof maxSize === 'string' ? 
+    const maxBytes = typeof maxSize === 'string' ?
       parseInt(maxSize) * 1024 * 1024 : maxSize
 
     if (contentLength > maxBytes) {
@@ -161,7 +175,7 @@ export const requestSizeLimit = (maxSize = '10mb') => {
 // API key validation for external services
 export const validateApiKey = (req, res, next) => {
   const apiKey = req.get('X-API-Key')
-  
+
   if (req.path.startsWith('/api/webhook/')) {
     // Webhook endpoints require API key validation
     if (!apiKey || !isValidApiKey(apiKey)) {
@@ -171,7 +185,7 @@ export const validateApiKey = (req, res, next) => {
       })
     }
   }
-  
+
   next()
 }
 
@@ -181,7 +195,7 @@ const isValidApiKey = (key) => {
     process.env.VAPI_WEBHOOK_SECRET,
     process.env.RAZORPAY_WEBHOOK_SECRET
   ].filter(Boolean)
-  
+
   return validKeys.includes(key)
 }
 
@@ -190,7 +204,7 @@ export const validateContentType = (allowedTypes = ['application/json']) => {
   return (req, res, next) => {
     if (req.method === 'POST' || req.method === 'PUT' || req.method === 'PATCH') {
       const contentType = req.get('Content-Type')
-      
+
       if (!contentType || !allowedTypes.some(type => contentType.includes(type))) {
         return res.status(415).json({
           success: false,
@@ -198,7 +212,7 @@ export const validateContentType = (allowedTypes = ['application/json']) => {
         })
       }
     }
-    
+
     next()
   }
 }
