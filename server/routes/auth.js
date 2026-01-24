@@ -5,8 +5,10 @@ import { body, validationResult } from 'express-validator';
 import User from '../models/User.js';
 import { auth } from '../middleware/auth.js';
 import tokenService from '../services/token/tokenService.js';
+import { OAuth2Client } from 'google-auth-library';
 
 const router = express.Router();
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // Generate JWT token
 const generateToken = (userId) => {
@@ -138,21 +140,19 @@ router.post('/login', [
 // Google OAuth Login
 router.post('/google', async (req, res) => {
   try {
-    const { credential, clientId } = req.body;
+    const { credential } = req.body;
 
-    // Verify Google token (you'll need to install google-auth-library)
-    // For now, we'll create a simplified version
+    if (!credential) {
+      return res.status(400).json({ message: 'Google credential is required' });
+    }
 
-    // In a real implementation, you would verify the Google token here
-    // const ticket = await client.verifyIdToken({
-    //   idToken: credential,
-    //   audience: process.env.GOOGLE_CLIENT_ID
-    // });
+    // Verify Google token
+    const ticket = await client.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID
+    });
 
-    // For demo purposes, we'll extract user info from the credential
-    // In production, properly verify the Google token
-
-    const payload = JSON.parse(atob(credential.split('.')[1]));
+    const payload = ticket.getPayload();
     const { email, name, picture, sub: googleId } = payload;
 
     // Check if user exists

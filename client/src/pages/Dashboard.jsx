@@ -53,7 +53,7 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background flex">
+    <div className="min-h-screen bg-transparent flex">
       {/* Sidebar Navigation */}
       <aside className="w-64 bg-card shadow-sm border-r border-primary/5">
         <div className="p-6">

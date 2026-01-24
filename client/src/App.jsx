@@ -15,13 +15,16 @@ import AnalyticsPage from './pages/AnalyticsPage'
 import SettingsPage from './pages/SettingsPage'
 import ProtectedRoute from './components/ProtectedRoute'
 
+import Background from './components/Background'
+
 
 function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
         <Router>
-          <div className="min-h-screen bg-background">
+          <div className="min-h-screen relative">
+            <Background />
             <Routes>
               <Route path="/" element={<LandingPage />} />
               <Route path="/login" element={<LoginPage />} />

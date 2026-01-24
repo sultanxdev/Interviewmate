@@ -21,7 +21,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-background text-foreground selection:bg-primary selection:text-primary-foreground">
+    <div className="min-h-screen bg-transparent text-foreground selection:bg-primary selection:text-primary-foreground">
       {/* 1. TOP NAVIGATION (Sticky) */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b border-primary/5">
         <div className="container mx-auto px-6 py-4 flex justify-between items-center">
@@ -406,7 +406,7 @@ export default function LandingPage() {
       </section>
 
       {/* 13. FOOTER */}
-      <footer className="py-12 border-t border-primary/5 text-center bg-background">
+      <footer className="py-12 border-t border-primary/5 text-center bg-transparent">
         <div className="container mx-auto px-6 space-y-8">
           <div className="flex items-center justify-center gap-2">
             <div className="h-6 w-6 rounded-full bg-primary flex items-center justify-center">

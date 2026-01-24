@@ -43,6 +43,26 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
+  const googleLogin = async (credential) => {
+    try {
+      const response = await axios.post('/api/auth/google', { credential })
+      const { token, user } = response.data
+
+      localStorage.setItem('token', token)
+      setToken(token)
+      setUser(user)
+      setTokenBalance(user.tokenBalance || 0)
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
+
+      return { success: true }
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.message || 'Google login failed'
+      }
+    }
+  }
+
   const login = async (email, password) => {
     try {
       const response = await axios.post('/api/auth/login', { email, password })
@@ -103,6 +123,7 @@ export const AuthProvider = ({ children }) => {
   const value = {
     user,
     login,
+    googleLogin,
     signup,
     logout,
     loading,
