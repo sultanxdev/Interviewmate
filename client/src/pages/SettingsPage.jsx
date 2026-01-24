@@ -4,22 +4,26 @@ import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
 import { Button } from '../components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card'
-import { 
-  ArrowLeft, 
-  Bell, 
-  Globe, 
-  Mic, 
-  Volume2, 
-  Shield, 
+import {
+  ArrowLeft,
+  Bell,
+  Globe,
+  Mic,
+  Volume2,
+  Shield,
   Download,
   Trash2,
-  Save
+  Save,
+  CreditCard,
+  Coins
 } from 'lucide-react'
+import PricingModal from '../components/PricingModal'
 
 const SettingsPage = () => {
   const navigate = useNavigate()
-  const { user } = useAuth()
+  const { user, tokenBalance } = useAuth()
   const { theme, toggleTheme } = useTheme()
+  const [isPricingModalOpen, setIsPricingModalOpen] = useState(false)
   const [settings, setSettings] = useState({
     notifications: {
       email: true,
@@ -75,9 +79,9 @@ const SettingsPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-background dark:bg-gray-900">
       {/* Header */}
-      <header className="bg-white dark:bg-gray-800 shadow-sm border-b">
+      <header className="bg-card dark:bg-gray-800 shadow-sm border-b border-primary/5">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between py-6">
             <div className="flex items-center space-x-4">
@@ -92,7 +96,7 @@ const SettingsPage = () => {
                 Settings
               </h1>
             </div>
-            <Button onClick={handleSave} className="bg-indigo-600 hover:bg-indigo-700">
+            <Button onClick={handleSave} className="bg-primary hover:bg-primary/90">
               <Save className="h-4 w-4 mr-2" />
               Save Changes
             </Button>
@@ -102,6 +106,58 @@ const SettingsPage = () => {
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="space-y-6">
+          {/* Subscription & Tokens */}
+          <Card className="overflow-hidden border-2 border-primary/20">
+            <div className="bg-indigo-50 dark:bg-indigo-900/20 p-6 border-b border-primary/20">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="bg-primary p-2 rounded-lg">
+                    <CreditCard className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">Subscription & Tokens</h3>
+                    <p className="text-sm text-primary dark:text-primary-foreground/80 font-bold uppercase tracking-widest text-[10px]">Manage your plan and credits</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="flex items-center space-x-2 bg-white dark:bg-gray-800 px-4 py-2 rounded-full shadow-sm border border-primary/20">
+                    <Coins className="h-5 w-5 text-yellow-500" />
+                    <span className="font-bold text-gray-900 dark:text-white">{tokenBalance} Tokens</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <CardContent className="p-6">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div>
+                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Current Plan</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+                    {user?.subscription || 'Free Tier'}
+                  </p>
+                  <p className="text-gray-600 dark:text-gray-300 mt-1">
+                    {user?.subscription === 'Pro'
+                      ? 'You have unlimited access to all features'
+                      : 'You are using the limited free version'}
+                  </p>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Button
+                    onClick={() => setIsPricingModalOpen(true)}
+                    className="bg-primary hover:bg-primary/90 text-white"
+                  >
+                    Buy Tokens
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsPricingModalOpen(true)}
+                  >
+                    Upgrade Plan
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Notifications */}
           <Card>
             <CardHeader>
@@ -123,7 +179,7 @@ const SettingsPage = () => {
                     onChange={(e) => handleSettingChange('notifications', 'email', e.target.checked)}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
                 </label>
               </div>
 
@@ -139,7 +195,7 @@ const SettingsPage = () => {
                     onChange={(e) => handleSettingChange('notifications', 'interviews', e.target.checked)}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
                 </label>
               </div>
 
@@ -155,7 +211,7 @@ const SettingsPage = () => {
                     onChange={(e) => handleSettingChange('notifications', 'reports', e.target.checked)}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
                 </label>
               </div>
             </CardContent>
@@ -182,7 +238,7 @@ const SettingsPage = () => {
                     onChange={(e) => handleSettingChange('audio', 'autoPlay', e.target.checked)}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
                 </label>
               </div>
 
@@ -239,7 +295,7 @@ const SettingsPage = () => {
                     onChange={(e) => handleSettingChange('privacy', 'shareReports', e.target.checked)}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
                 </label>
               </div>
 
@@ -255,7 +311,7 @@ const SettingsPage = () => {
                     onChange={(e) => handleSettingChange('privacy', 'analytics', e.target.checked)}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
                 </label>
               </div>
             </CardContent>
@@ -277,7 +333,7 @@ const SettingsPage = () => {
                 <select
                   value={settings.language}
                   onChange={(e) => setSettings(prev => ({ ...prev, language: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary/20 focus:ring-offset-background"
                 >
                   <option value="en">English</option>
                   <option value="es">Spanish</option>
@@ -294,7 +350,7 @@ const SettingsPage = () => {
                 <select
                   value={settings.timezone}
                   onChange={(e) => setSettings(prev => ({ ...prev, timezone: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary/20 focus:ring-offset-background"
                 >
                   <option value="UTC">UTC</option>
                   <option value="America/New_York">Eastern Time</option>
@@ -329,8 +385,8 @@ const SettingsPage = () => {
                   <p className="font-medium text-red-600">Delete All Data</p>
                   <p className="text-sm text-gray-600 dark:text-gray-300">Permanently delete all interview records</p>
                 </div>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={deleteAllData}
                   className="text-red-600 border-red-200 hover:bg-red-50"
                 >
@@ -342,6 +398,11 @@ const SettingsPage = () => {
           </Card>
         </div>
       </div>
+
+      <PricingModal
+        isOpen={isPricingModalOpen}
+        onClose={() => setIsPricingModalOpen(false)}
+      />
     </div>
   )
 }

@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import { body, validationResult } from 'express-validator';
 import User from '../models/User.js';
 import { auth } from '../middleware/auth.js';
+import tokenService from '../services/token/tokenService.js';
 
 const router = express.Router();
 
@@ -50,6 +51,14 @@ router.post('/register', [
 
     await user.save();
 
+    // Credit free tokens on signup
+    try {
+      await tokenService.creditSignupTokens(user._id);
+    } catch (tokenError) {
+      console.error('Token credit error:', tokenError);
+      // Continue even if token credit fails
+    }
+
     // Generate tokens
     const token = generateToken(user._id);
     const refreshToken = generateRefreshToken(user._id);
@@ -63,7 +72,8 @@ router.post('/register', [
         name: user.name,
         email: user.email,
         subscription: user.subscription,
-        avatar: user.avatar
+        avatar: user.avatar,
+        tokenBalance: user.tokenBalance
       }
     });
 
@@ -102,6 +112,9 @@ router.post('/login', [
     const token = generateToken(user._id);
     const refreshToken = generateRefreshToken(user._id);
 
+    // Check and refill monthly subscription allowance if applicable
+    await user.checkMonthlyRefill();
+
     res.json({
       message: 'Login successful',
       token,
@@ -111,7 +124,8 @@ router.post('/login', [
         name: user.name,
         email: user.email,
         subscription: user.subscription,
-        avatar: user.avatar
+        avatar: user.avatar,
+        tokenBalance: user.tokenBalance
       }
     });
 
@@ -128,22 +142,22 @@ router.post('/google', async (req, res) => {
 
     // Verify Google token (you'll need to install google-auth-library)
     // For now, we'll create a simplified version
-    
+
     // In a real implementation, you would verify the Google token here
     // const ticket = await client.verifyIdToken({
     //   idToken: credential,
     //   audience: process.env.GOOGLE_CLIENT_ID
     // });
-    
+
     // For demo purposes, we'll extract user info from the credential
     // In production, properly verify the Google token
-    
+
     const payload = JSON.parse(atob(credential.split('.')[1]));
     const { email, name, picture, sub: googleId } = payload;
 
     // Check if user exists
-    let user = await User.findOne({ 
-      $or: [{ email }, { googleId }] 
+    let user = await User.findOne({
+      $or: [{ email }, { googleId }]
     });
 
     if (user) {
@@ -153,6 +167,8 @@ router.post('/google', async (req, res) => {
         user.avatar = picture;
         await user.save();
       }
+      // Check monthly refill
+      await user.checkMonthlyRefill();
     } else {
       // Create new user
       user = new User({
@@ -163,6 +179,15 @@ router.post('/google', async (req, res) => {
         isActive: true
       });
       await user.save();
+
+      // Credit free tokens on signup
+      try {
+        await tokenService.creditSignupTokens(user._id);
+        // Refresh user to get updated token balance
+        user = await User.findById(user._id);
+      } catch (tokenError) {
+        console.error('Token credit error:', tokenError);
+      }
     }
 
     // Generate tokens
@@ -178,7 +203,8 @@ router.post('/google', async (req, res) => {
         name: user.name,
         email: user.email,
         subscription: user.subscription,
-        avatar: user.avatar
+        avatar: user.avatar,
+        tokenBalance: user.tokenBalance
       }
     });
 

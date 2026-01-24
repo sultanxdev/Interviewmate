@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import axios from 'axios'
-import { 
-  RadarChart, 
-  PolarGrid, 
-  PolarAngleAxis, 
-  PolarRadiusAxis, 
-  Radar, 
+import {
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  Radar,
   ResponsiveContainer,
   BarChart,
   Bar,
@@ -18,12 +18,12 @@ import {
 import jsPDF from 'jspdf'
 import { Button } from '../components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card'
-import { 
-  ArrowLeft, 
-  Download, 
-  Share2, 
-  Trophy, 
-  TrendingUp, 
+import {
+  ArrowLeft,
+  Download,
+  Share2,
+  Trophy,
+  TrendingUp,
   TrendingDown,
   Clock,
   Calendar,
@@ -49,8 +49,8 @@ const ReportPage = () => {
   const fetchInterviewReport = async () => {
     try {
       setLoading(true)
-      const response = await axios.get(`/api/interview/report/${id}`)
-      setInterview(response.data.interview)
+      const response = await axios.get(`/api/report/session/${id}`)
+      setInterview(response.data) // The new API returns the report directly
     } catch (error) {
       console.error('Failed to fetch report:', error)
       setError('Failed to load interview report')
@@ -76,12 +76,12 @@ const ReportPage = () => {
   const generatePDF = () => {
     const doc = new jsPDF()
     const pageWidth = doc.internal.pageSize.width
-    
+
     // Header
     doc.setFontSize(20)
     doc.setTextColor(79, 70, 229) // Indigo color
     doc.text('InterviewMate Report', pageWidth / 2, 20, { align: 'center' })
-    
+
     // Interview Details
     doc.setFontSize(12)
     doc.setTextColor(0, 0, 0)
@@ -90,26 +90,26 @@ const ReportPage = () => {
     doc.text(`Company: ${interview.company || 'N/A'}`, 20, 60)
     doc.text(`Date: ${new Date(interview.createdAt).toLocaleDateString()}`, 20, 70)
     doc.text(`Duration: ${interview.duration || 'N/A'} minutes`, 20, 80)
-    
+
     // Overall Score
     doc.setFontSize(16)
     doc.text('Overall Score', 20, 100)
     doc.setFontSize(24)
     doc.setTextColor(79, 70, 229)
     doc.text(`${interview.overallScore}/100`, 20, 115)
-    
+
     // Skills Breakdown
     doc.setFontSize(14)
     doc.setTextColor(0, 0, 0)
     doc.text('Skills Breakdown:', 20, 140)
-    
+
     let yPos = 155
     Object.entries(interview.skillBreakdown || {}).forEach(([skill, score]) => {
       doc.setFontSize(12)
       doc.text(`${skill.charAt(0).toUpperCase() + skill.slice(1)}: ${score}/100`, 25, yPos)
       yPos += 10
     })
-    
+
     // Strengths
     yPos += 10
     doc.setFontSize(14)
@@ -120,7 +120,7 @@ const ReportPage = () => {
       doc.text(`• ${strength}`, 25, yPos)
       yPos += 8
     })
-    
+
     // Areas for Improvement
     yPos += 10
     doc.setFontSize(14)
@@ -131,7 +131,7 @@ const ReportPage = () => {
       doc.text(`• ${weakness}`, 25, yPos)
       yPos += 8
     })
-    
+
     // Save the PDF
     doc.save(`InterviewMate_Report_${interview.role}_${new Date().toISOString().split('T')[0]}.pdf`)
   }
@@ -156,9 +156,9 @@ const ReportPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+      <div className="min-h-screen bg-background dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-indigo-600" />
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
           <p className="text-gray-600 dark:text-gray-300">Loading your interview report...</p>
         </div>
       </div>
@@ -167,7 +167,7 @@ const ReportPage = () => {
 
   if (error || !interview) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+      <div className="min-h-screen bg-background dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
           <p className="text-gray-600 dark:text-gray-300 mb-4">{error || 'Interview report not found'}</p>
@@ -190,9 +190,9 @@ const ReportPage = () => {
   const scoreBadge = getScoreBadge(interview.overallScore)
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-background dark:bg-gray-900">
       {/* Header */}
-      <header className="bg-white dark:bg-gray-800 shadow-sm border-b">
+      <header className="bg-card dark:bg-gray-800 shadow-sm border-b">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between py-6">
             <div className="flex items-center space-x-4">
@@ -212,7 +212,7 @@ const ReportPage = () => {
                 <Share2 className="h-4 w-4 mr-2" />
                 Share
               </Button>
-              <Button onClick={generatePDF} className="bg-indigo-600 hover:bg-indigo-700">
+              <Button onClick={generatePDF} className="bg-primary hover:bg-indigo-700">
                 <Download className="h-4 w-4 mr-2" />
                 Download PDF
               </Button>
@@ -279,8 +279,8 @@ const ReportPage = () => {
                   <Radar
                     name="Score"
                     dataKey="score"
-                    stroke="#4F46E5"
-                    fill="#4F46E5"
+                    stroke="#121212"
+                    fill="#121212"
                     fillOpacity={0.3}
                   />
                 </RadarChart>
@@ -300,7 +300,7 @@ const ReportPage = () => {
                   <XAxis dataKey="skill" />
                   <YAxis domain={[0, 100]} />
                   <Tooltip />
-                  <Bar dataKey="score" fill="#4F46E5" />
+                  <Bar dataKey="score" fill="#121212" />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -400,7 +400,7 @@ const ReportPage = () => {
               <Link to="/interview/setup">
                 <Button variant="outline" className="w-full h-auto p-4 flex flex-col items-center space-y-2">
                   <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
-                    <Trophy className="h-4 w-4 text-indigo-600" />
+                    <Trophy className="h-4 w-4 text-primary" />
                   </div>
                   <span className="font-medium">Practice Again</span>
                   <span className="text-sm text-gray-600 text-center">
@@ -421,8 +421,8 @@ const ReportPage = () => {
                 </Button>
               </Link>
 
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={shareReport}
                 className="w-full h-auto p-4 flex flex-col items-center space-y-2"
               >

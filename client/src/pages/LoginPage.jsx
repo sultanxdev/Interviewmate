@@ -35,7 +35,7 @@ const LoginPage = () => {
 
     try {
       const result = await login(formData.email, formData.password)
-      
+
       if (result.success) {
         navigate('/dashboard')
       } else {
@@ -49,14 +49,14 @@ const LoginPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
-          <Link to="/" className="text-3xl font-bold text-indigo-600 hover:text-indigo-700">
+          <Link to="/" className="text-4xl font-heading font-bold text-primary tracking-tight">
             InterviewMate
           </Link>
-          <p className="text-gray-600 dark:text-gray-300 mt-2">
+          <p className="text-muted-foreground mt-3 font-medium">
             Welcome back! Sign in to continue practicing.
           </p>
         </div>
@@ -119,9 +119,9 @@ const LoginPage = () => {
 
               {/* Forgot Password Link */}
               <div className="text-right">
-                <Link 
-                  to="/forgot-password" 
-                  className="text-sm text-indigo-600 hover:text-indigo-700"
+                <Link
+                  to="/forgot-password"
+                  className="text-sm text-primary hover:underline font-medium"
                 >
                   Forgot your password?
                 </Link>
@@ -131,11 +131,11 @@ const LoginPage = () => {
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-indigo-600 hover:bg-indigo-700"
+                className="w-full h-12 text-base font-semibold"
               >
                 {loading ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    <Loader2 className="h-5 w-5 animate-spin mr-2" />
                     Signing in...
                   </>
                 ) : (
@@ -186,12 +186,12 @@ const LoginPage = () => {
             </form>
 
             {/* Sign Up Link */}
-            <div className="mt-6 text-center">
-              <p className="text-sm text-gray-600 dark:text-gray-300">
+            <div className="mt-8 text-center">
+              <p className="text-sm text-muted-foreground">
                 Don't have an account?{' '}
-                <Link 
-                  to="/signup" 
-                  className="text-indigo-600 hover:text-indigo-700 font-medium"
+                <Link
+                  to="/signup"
+                  className="text-primary hover:underline font-bold"
                 >
                   Sign up
                 </Link>
@@ -202,8 +202,8 @@ const LoginPage = () => {
 
         {/* Back to Home */}
         <div className="text-center mt-6">
-          <Link 
-            to="/" 
+          <Link
+            to="/"
             className="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
           >
             ← Back to Home

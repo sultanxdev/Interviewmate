@@ -4,12 +4,12 @@ import axios from 'axios'
 import { Button } from '../components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card'
 import { Input } from '../components/ui/input'
-import { 
-  ArrowLeft, 
-  Search, 
-  Filter, 
-  Eye, 
-  Trash2, 
+import {
+  ArrowLeft,
+  Search,
+  Filter,
+  Eye,
+  Trash2,
   Calendar,
   Building,
   User,
@@ -39,20 +39,20 @@ const HistoryPage = () => {
         limit: 10,
         sortBy: sortBy
       })
-      
+
       if (filterType !== 'all') {
         params.append('type', filterType)
       }
-      
+
       if (searchTerm) {
         params.append('role', searchTerm)
       }
 
-      const response = await axios.get(`/api/interview/history?${params}`)
-      setInterviews(response.data.interviews)
+      const response = await axios.get(`/api/report/user/all?${params}`)
+      setInterviews(response.data.reports)
       setTotalPages(response.data.totalPages)
     } catch (error) {
-      console.error('Failed to fetch interviews:', error)
+      console.error('Failed to fetch reports:', error)
     } finally {
       setLoading(false)
     }
@@ -74,18 +74,19 @@ const HistoryPage = () => {
     switch (type) {
       case 'Technical':
         return '💻'
-      case 'HR':
+      case 'Behavioral':
         return '👥'
-      case 'Managerial':
+      case 'Mock':
         return '📊'
       default:
         return '📝'
     }
   }
 
-  const filteredInterviews = interviews.filter(interview =>
-    interview.role.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const filteredInterviews = interviews.filter(report => {
+    const role = report.session?.setup?.scenario?.role || 'Custom Session';
+    return role.toLowerCase().includes(searchTerm.toLowerCase())
+  })
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -135,10 +136,9 @@ const HistoryPage = () => {
                 className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               >
                 <option value="all">All Types</option>
-                <option value="HR">HR</option>
+                <option value="Behavioral">Behavioral</option>
                 <option value="Technical">Technical</option>
-                <option value="Managerial">Managerial</option>
-                <option value="Custom">Custom</option>
+                <option value="Mock">Mock</option>
               </select>
 
               {/* Sort By */}
@@ -148,8 +148,7 @@ const HistoryPage = () => {
                 className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               >
                 <option value="createdAt">Latest First</option>
-                <option value="overallScore">Highest Score</option>
-                <option value="role">Role A-Z</option>
+                <option value="score">Highest Score</option>
               </select>
             </div>
           </CardContent>
@@ -169,46 +168,46 @@ const HistoryPage = () => {
                 No interviews found
               </h3>
               <p className="text-gray-600 dark:text-gray-300 mb-6">
-                {searchTerm || filterType !== 'all' 
+                {searchTerm || filterType !== 'all'
                   ? 'Try adjusting your search or filters'
                   : 'Start practicing to see your interview history here'
                 }
               </p>
-              <Link to="/interview/setup">
+              <Link to="/session/setup">
                 <Button className="bg-indigo-600 hover:bg-indigo-700">
-                  Start Your First Interview
+                  Start Your First Session
                 </Button>
               </Link>
             </CardContent>
           </Card>
         ) : (
           <div className="space-y-4">
-            {filteredInterviews.map((interview) => (
-              <Card key={interview._id} className="hover:shadow-lg transition-shadow">
+            {filteredInterviews.map((report) => (
+              <Card key={report._id} className="hover:shadow-lg transition-shadow">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4">
                       <div className="text-2xl">
-                        {getTypeIcon(interview.interviewType)}
+                        {getTypeIcon(report.session?.setup?.mode)}
                       </div>
                       <div>
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                          {interview.role}
+                          {report.session?.setup?.scenario?.role || 'Custom Session'}
                         </h3>
                         <div className="flex items-center space-x-4 mt-1 text-sm text-gray-600 dark:text-gray-300">
                           <div className="flex items-center space-x-1">
                             <User className="h-4 w-4" />
-                            <span>{interview.interviewType}</span>
+                            <span>{report.session?.setup?.mode}</span>
                           </div>
-                          {interview.company && (
+                          {report.session?.setup?.scenario?.company && (
                             <div className="flex items-center space-x-1">
                               <Building className="h-4 w-4" />
-                              <span>{interview.company}</span>
+                              <span>{report.session?.setup?.scenario?.company}</span>
                             </div>
                           )}
                           <div className="flex items-center space-x-1">
                             <Calendar className="h-4 w-4" />
-                            <span>{new Date(interview.createdAt).toLocaleDateString()}</span>
+                            <span>{new Date(report.createdAt).toLocaleDateString()}</span>
                           </div>
                         </div>
                       </div>
@@ -217,33 +216,20 @@ const HistoryPage = () => {
                     <div className="flex items-center space-x-4">
                       {/* Score */}
                       <div className="text-center">
-                        <div className={`text-2xl font-bold px-3 py-1 rounded-lg ${getScoreColor(interview.overallScore)}`}>
-                          {interview.overallScore}%
+                        <div className={`text-2xl font-bold px-3 py-1 rounded-lg ${getScoreColor(report.overallScore)}`}>
+                          {report.overallScore}%
                         </div>
                         <div className="text-xs text-gray-500 mt-1">Score</div>
                       </div>
 
                       {/* Actions */}
                       <div className="flex items-center space-x-2">
-                        <Link to={`/report/${interview._id}`}>
+                        <Link to={`/report/${report._id}`}>
                           <Button variant="outline" size="sm">
                             <Eye className="h-4 w-4 mr-1" />
                             View Report
                           </Button>
                         </Link>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            if (confirm('Are you sure you want to delete this interview?')) {
-                              // TODO: Implement delete functionality
-                              console.log('Delete interview:', interview._id)
-                            }
-                          }}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
                       </div>
                     </div>
                   </div>
@@ -282,7 +268,7 @@ const HistoryPage = () => {
                 >
                   Previous
                 </Button>
-                
+
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
                   <Button
                     key={page}
@@ -293,7 +279,7 @@ const HistoryPage = () => {
                     {page}
                   </Button>
                 ))}
-                
+
                 <Button
                   variant="outline"
                   onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}

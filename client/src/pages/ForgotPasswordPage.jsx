@@ -30,7 +30,7 @@ const ForgotPasswordPage = () => {
 
   if (sent) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="w-full max-w-md">
           <Card>
             <CardContent className="p-8 text-center">
@@ -45,9 +45,9 @@ const ForgotPasswordPage = () => {
                 Didn't receive the email? Check your spam folder or try again.
               </p>
               <div className="space-y-3">
-                <Button 
+                <Button
                   onClick={() => setSent(false)}
-                  variant="outline" 
+                  variant="outline"
                   className="w-full"
                 >
                   Try Different Email
@@ -66,14 +66,14 @@ const ForgotPasswordPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
-          <Link to="/" className="text-3xl font-bold text-indigo-600 hover:text-indigo-700">
+          <Link to="/" className="text-4xl font-heading font-bold text-primary tracking-tight">
             InterviewMate
           </Link>
-          <p className="text-gray-600 dark:text-gray-300 mt-2">
+          <p className="text-muted-foreground mt-3 font-medium">
             Reset your password
           </p>
         </div>
@@ -115,11 +115,11 @@ const ForgotPasswordPage = () => {
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-indigo-600 hover:bg-indigo-700"
+                className="w-full h-12 text-base font-semibold"
               >
                 {loading ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    <Loader2 className="h-5 w-5 animate-spin mr-2" />
                     Sending...
                   </>
                 ) : (
@@ -130,9 +130,9 @@ const ForgotPasswordPage = () => {
 
             {/* Back to Login */}
             <div className="mt-6 text-center">
-              <Link 
-                to="/login" 
-                className="inline-flex items-center text-sm text-indigo-600 hover:text-indigo-700"
+              <Link
+                to="/login"
+                className="inline-flex items-center text-sm text-primary hover:underline font-bold"
               >
                 <ArrowLeft className="h-4 w-4 mr-1" />
                 Back to Login
@@ -145,7 +145,7 @@ const ForgotPasswordPage = () => {
         <div className="text-center mt-6">
           <p className="text-sm text-gray-600 dark:text-gray-300">
             Need help?{' '}
-            <a href="mailto:support@interviewmate.com" className="text-indigo-600 hover:text-indigo-700">
+            <a href="mailto:support@interviewmate.com" className="text-primary hover:underline font-bold">
               Contact Support
             </a>
           </p>

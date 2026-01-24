@@ -6,11 +6,20 @@ import User from '../models/User.js';
 
 const router = express.Router();
 
-// Initialize Razorpay
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET
-});
+// Lazy-initialize Razorpay (after env vars are loaded)
+let razorpay = null;
+const getRazorpay = () => {
+  if (!razorpay) {
+    if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+      throw new Error('Razorpay credentials not configured');
+    }
+    razorpay = new Razorpay({
+      key_id: process.env.RAZORPAY_KEY_ID,
+      key_secret: process.env.RAZORPAY_KEY_SECRET
+    });
+  }
+  return razorpay;
+};
 
 // Create order
 router.post('/create-order', auth, async (req, res) => {
@@ -37,7 +46,7 @@ router.post('/create-order', auth, async (req, res) => {
       }
     };
 
-    const order = await razorpay.orders.create(options);
+    const order = await getRazorpay().orders.create(options);
 
     res.json({
       orderId: order.id,
@@ -82,7 +91,7 @@ router.post('/verify-payment', auth, async (req, res) => {
     // Calculate expiry date
     const now = new Date();
     let expiryDate;
-    
+
     if (plan === 'pro_monthly') {
       expiryDate = new Date(now.setMonth(now.getMonth() + 1));
     } else if (plan === 'pro_yearly') {
@@ -112,10 +121,10 @@ router.post('/verify-payment', auth, async (req, res) => {
 router.get('/subscription', auth, async (req, res) => {
   try {
     const user = await User.findById(req.userId).select('subscription subscriptionExpiry');
-    
-    const isActive = user.subscription === 'pro' && 
-                    user.subscriptionExpiry && 
-                    new Date() < user.subscriptionExpiry;
+
+    const isActive = user.subscription === 'pro' &&
+      user.subscriptionExpiry &&
+      new Date() < user.subscriptionExpiry;
 
     res.json({
       subscription: user.subscription,

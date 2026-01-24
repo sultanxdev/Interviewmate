@@ -36,41 +36,41 @@ const SignupPage = () => {
       setError('Name is required')
       return false
     }
-    
+
     if (!formData.email.trim()) {
       setError('Email is required')
       return false
     }
-    
+
     if (!/\S+@\S+\.\S+/.test(formData.email)) {
       setError('Please enter a valid email address')
       return false
     }
-    
+
     if (formData.password.length < 6) {
       setError('Password must be at least 6 characters long')
       return false
     }
-    
+
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match')
       return false
     }
-    
+
     return true
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    
+
     if (!validateForm()) return
-    
+
     setLoading(true)
     setError('')
 
     try {
       const result = await signup(formData.name, formData.email, formData.password)
-      
+
       if (result.success) {
         navigate('/dashboard')
       } else {
@@ -96,15 +96,15 @@ const SignupPage = () => {
   const passwordStrength = getPasswordStrength(formData.password)
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
-          <Link to="/" className="text-3xl font-bold text-indigo-600 hover:text-indigo-700">
+          <Link to="/" className="text-4xl font-heading font-bold text-primary tracking-tight">
             InterviewMate
           </Link>
-          <p className="text-gray-600 dark:text-gray-300 mt-2">
-            Create your account and start practicing interviews today!
+          <p className="text-muted-foreground mt-3 font-medium">
+            Create your account and start practicing today!
           </p>
         </div>
 
@@ -180,17 +180,16 @@ const SignupPage = () => {
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
-                
+
                 {/* Password Strength Indicator */}
                 {formData.password && (
                   <div className="flex items-center space-x-2">
                     <div className="flex-1 bg-gray-200 rounded-full h-2">
                       <div
-                        className={`h-2 rounded-full transition-all duration-300 ${
-                          passwordStrength.strength === 1 ? 'bg-red-500 w-1/3' :
-                          passwordStrength.strength === 2 ? 'bg-yellow-500 w-2/3' :
-                          passwordStrength.strength === 3 ? 'bg-green-500 w-full' : 'w-0'
-                        }`}
+                        className={`h-2 rounded-full transition-all duration-300 ${passwordStrength.strength === 1 ? 'bg-red-500 w-1/3' :
+                            passwordStrength.strength === 2 ? 'bg-yellow-500 w-2/3' :
+                              passwordStrength.strength === 3 ? 'bg-green-500 w-full' : 'w-0'
+                          }`}
                       />
                     </div>
                     <span className={`text-xs font-medium ${passwordStrength.color}`}>
@@ -223,7 +222,7 @@ const SignupPage = () => {
                     {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
-                
+
                 {/* Password Match Indicator */}
                 {formData.confirmPassword && (
                   <div className="text-xs">
@@ -242,15 +241,15 @@ const SignupPage = () => {
                   type="checkbox"
                   id="terms"
                   required
-                  className="mt-1 h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                  className="mt-1 h-4 w-4 text-primary focus:ring-primary border-primary/20 rounded"
                 />
-                <label htmlFor="terms" className="text-sm text-gray-600 dark:text-gray-300">
+                <label htmlFor="terms" className="text-sm text-muted-foreground">
                   I agree to the{' '}
-                  <Link to="/terms" className="text-indigo-600 hover:text-indigo-700">
+                  <Link to="/terms" className="text-primary hover:underline font-bold">
                     Terms of Service
                   </Link>{' '}
                   and{' '}
-                  <Link to="/privacy" className="text-indigo-600 hover:text-indigo-700">
+                  <Link to="/privacy" className="text-primary hover:underline font-bold">
                     Privacy Policy
                   </Link>
                 </label>
@@ -260,11 +259,11 @@ const SignupPage = () => {
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-indigo-600 hover:bg-indigo-700"
+                className="w-full h-12 text-base font-semibold"
               >
                 {loading ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    <Loader2 className="h-5 w-5 animate-spin mr-2" />
                     Creating account...
                   </>
                 ) : (
@@ -315,12 +314,12 @@ const SignupPage = () => {
             </form>
 
             {/* Sign In Link */}
-            <div className="mt-6 text-center">
-              <p className="text-sm text-gray-600 dark:text-gray-300">
+            <div className="mt-8 text-center">
+              <p className="text-sm text-muted-foreground">
                 Already have an account?{' '}
-                <Link 
-                  to="/login" 
-                  className="text-indigo-600 hover:text-indigo-700 font-medium"
+                <Link
+                  to="/login"
+                  className="text-primary hover:underline font-bold"
                 >
                   Sign in
                 </Link>
@@ -331,8 +330,8 @@ const SignupPage = () => {
 
         {/* Back to Home */}
         <div className="text-center mt-6">
-          <Link 
-            to="/" 
+          <Link
+            to="/"
             className="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
           >
             ← Back to Home

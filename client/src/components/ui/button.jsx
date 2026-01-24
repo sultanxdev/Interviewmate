@@ -1,18 +1,19 @@
 import React from 'react'
 import { cn } from '../../lib/utils'
 
-const Button = React.forwardRef(({ 
-  className, 
-  variant = 'default', 
-  size = 'default', 
-  children, 
-  ...props 
+const Button = React.forwardRef(({
+  className,
+  variant = 'default',
+  size = 'default',
+  children,
+  ...props
 }, ref) => {
   const variants = {
-    default: 'bg-indigo-600 text-white hover:bg-indigo-700',
-    outline: 'border border-gray-300 bg-transparent hover:bg-gray-50',
-    ghost: 'hover:bg-gray-100 hover:text-gray-900',
-    destructive: 'bg-red-600 text-white hover:bg-red-700'
+    default: 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm',
+    outline: 'border border-primary/20 bg-transparent hover:bg-primary/5 text-primary',
+    ghost: 'hover:bg-primary/5 hover:text-primary',
+    secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
+    destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90'
   }
 
   const sizes = {

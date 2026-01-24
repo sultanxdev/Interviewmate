@@ -6,8 +6,8 @@ import LoginPage from './pages/LoginPage'
 import SignupPage from './pages/SignupPage'
 import ForgotPasswordPage from './pages/ForgotPasswordPage'
 import Dashboard from './pages/Dashboard'
-import InterviewSetup from './pages/InterviewSetup'
-import InterviewSession from './pages/InterviewSession'
+import SessionSetup from './pages/SessionSetup'
+import LiveSession from './pages/LiveSession'
 import ReportPage from './pages/ReportPage'
 import HistoryPage from './pages/HistoryPage'
 import ProfilePage from './pages/ProfilePage'
@@ -32,14 +32,14 @@ function App() {
                   <Dashboard />
                 </ProtectedRoute>
               } />
-              <Route path="/interview/setup" element={
+              <Route path="/session/setup" element={
                 <ProtectedRoute>
-                  <InterviewSetup />
+                  <SessionSetup />
                 </ProtectedRoute>
               } />
-              <Route path="/interview/session" element={
+              <Route path="/session/:sessionId" element={
                 <ProtectedRoute>
-                  <InterviewSession />
+                  <LiveSession />
                 </ProtectedRoute>
               } />
               <Route path="/report/:id" element={

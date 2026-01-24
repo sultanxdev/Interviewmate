@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
-import { 
-  LineChart, 
-  Line, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
   ResponsiveContainer,
   PieChart,
   Pie,
@@ -17,10 +17,10 @@ import {
 } from 'recharts'
 import { Button } from '../components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card'
-import { 
-  ArrowLeft, 
-  TrendingUp, 
-  TrendingDown, 
+import {
+  ArrowLeft,
+  TrendingUp,
+  TrendingDown,
   Target,
   Calendar,
   Award,
@@ -91,9 +91,9 @@ const AnalyticsPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+      <div className="min-h-screen bg-background dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-indigo-600" />
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
           <p className="text-gray-600 dark:text-gray-300">Loading your analytics...</p>
         </div>
       </div>
@@ -101,9 +101,9 @@ const AnalyticsPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-background dark:bg-gray-900">
       {/* Header */}
-      <header className="bg-white dark:bg-gray-800 shadow-sm border-b">
+      <header className="bg-card dark:bg-gray-800 shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between py-6">
             <div className="flex items-center space-x-4">
@@ -118,7 +118,7 @@ const AnalyticsPage = () => {
                 Analytics & Insights
               </h1>
             </div>
-            
+
             {/* Time Range Selector */}
             <select
               value={timeRange}
@@ -199,10 +199,10 @@ const AnalyticsPage = () => {
                   <XAxis dataKey="date" />
                   <YAxis domain={[0, 100]} />
                   <Tooltip />
-                  <Line 
-                    type="monotone" 
-                    dataKey="score" 
-                    stroke="#4F46E5" 
+                  <Line
+                    type="monotone"
+                    dataKey="score"
+                    stroke="#4F46E5"
                     strokeWidth={3}
                     dot={{ fill: '#4F46E5', strokeWidth: 2, r: 6 }}
                   />
@@ -259,9 +259,8 @@ const AnalyticsPage = () => {
                           </span>
                           <div className="flex items-center space-x-2">
                             <span className="text-sm text-gray-600">{skill.current}%</span>
-                            <div className={`flex items-center space-x-1 ${
-                              improvement > 0 ? 'text-green-600' : 'text-red-600'
-                            }`}>
+                            <div className={`flex items-center space-x-1 ${improvement > 0 ? 'text-green-600' : 'text-red-600'
+                              }`}>
                               {improvement > 0 ? (
                                 <TrendingUp className="h-3 w-3" />
                               ) : (
@@ -273,7 +272,7 @@ const AnalyticsPage = () => {
                         </div>
                         <div className="w-full bg-gray-200 rounded-full h-2">
                           <div
-                            className="bg-indigo-600 h-2 rounded-full transition-all duration-300"
+                            className="bg-primary h-2 rounded-full transition-all duration-300"
                             style={{ width: `${skill.current}%` }}
                           />
                         </div>
@@ -320,7 +319,7 @@ const AnalyticsPage = () => {
                   <li>• Average interview duration has decreased, showing improved efficiency</li>
                 </ul>
               </div>
-              
+
               <div className="space-y-4">
                 <h4 className="font-semibold text-gray-900 dark:text-white">💡 Recommendations</h4>
                 <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
