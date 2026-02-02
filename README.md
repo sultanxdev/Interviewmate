@@ -36,18 +36,6 @@
 
 ---
 
-## 📸 UI Sneak Peek
-
-*Coming soon...*
-
----
-
-## 🤝 Contributing
-
-This is a solo dev project, but feedback, ideas, and contributors are welcome!  
-Open issues or drop a star ⭐ to support InterviewMate.dev.
-
----
 
 ## 📬 Contact
 
