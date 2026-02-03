@@ -87,6 +87,7 @@ sequenceDiagram
     S->>C: Generate Final PDF Report
 ```
 
+<<<<<<< HEAD
 ### ER Diagram
 ```mermaid
 erDiagram
@@ -156,6 +157,8 @@ interviewmate/
    git clone https://github.com/yourusername/interviewmate.git
    cd interviewmate
    ```
+=======
+>>>>>>> 5741e05efc3177bd7c36105e9c13bf9623a4c299
 
 2. **Setup Server**
    ```bash
