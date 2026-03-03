@@ -67,8 +67,8 @@ app.use(cors({
 
 // Rate limiting
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 // limit each IP to 100 requests per windowMs
+  windowMs: 15 * 60 * 1000,
+  max: 100
 });
 app.use(limiter);
 
@@ -78,8 +78,8 @@ app.use(express.urlencoded({ extended: true }));
 
 // MongoDB connection
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/interviewmate')
-  .then(() => console.log('Server Connected to MongoDB'))
-  .catch(err => console.error('MongoDB connection errors:', err));
+  .then(() => console.log('✅ Connected to MongoDB'))
+  .catch(err => console.error('❌ MongoDB connection error:', err));
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -95,7 +95,7 @@ app.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
-// Error handling middleware
+// Global Express error handler
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({
@@ -104,7 +104,39 @@ app.use((err, req, res, next) => {
   });
 });
 
+// ── Start server ──────────────────────────────────────────────────────────
 httpServer.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`WebSocket server ready`);
+  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`🔌 WebSocket server ready`);
 });
+
+// Handle EADDRINUSE and other listen errors gracefully
+httpServer.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.error(`\n❌ Port ${PORT} is already in use.`);
+    console.error(`   To free it, run:`);
+    console.error(`     netstat -ano | findstr :${PORT}   (note the PID)`);
+    console.error(`     taskkill /PID <PID> /F\n`);
+    process.exit(1); // Exit cleanly so nodemon can restart on next save
+  } else {
+    throw err;
+  }
+});
+
+// Graceful shutdown — release the port properly on SIGTERM / SIGINT
+// (important for nodemon restarts so port 5000 is freed immediately)
+const shutdown = (signal) => {
+  console.log(`\n[${signal}] Shutting down gracefully...`);
+  httpServer.close(() => {
+    console.log('HTTP server closed.');
+    mongoose.connection.close(false).then(() => {
+      console.log('MongoDB disconnected.');
+      process.exit(0);
+    }).catch(() => process.exit(0));
+  });
+  // Force-exit after 5s if graceful close hangs
+  setTimeout(() => process.exit(1), 5000).unref();
+};
+
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));

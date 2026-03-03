@@ -9,22 +9,103 @@ import Session from '../../models/Session.js';
 class DecisionEngine {
     constructor() {
         this.apiKey = process.env.GEMINI_API_KEY;
-        if (!this.apiKey) {
-            console.warn('GEMINI_API_KEY not set - Decision engine will not function');
-        } else {
-            console.log('✅ Gemini decision engine initialized with API key');
-        }
-
         this.genAI = null;
         this.model = null;
+        this.rateLimitedUntil = null; // timestamp — skip API calls until this clears
 
-        if (this.apiKey) {
+        if (!this.apiKey) {
+            console.warn('⚠️  GEMINI_API_KEY not set — LLM will use template fallbacks');
+        } else {
             this.genAI = new GoogleGenerativeAI(this.apiKey);
-            this.model = this.genAI.getGenerativeModel({
-                model: 'gemini-1.5-flash',
-            });
-            console.log('✅ Gemini model set to gemini-1.5-flash');
+            this.model = this.genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+            console.log('✅ Gemini decision engine initialized with API key');
+            console.log('✅ Gemini model set to gemini-2.0-flash');
         }
+    }
+
+    /** Returns true if we're currently rate-limited */
+    isRateLimited() {
+        if (!this.rateLimitedUntil) return false;
+        if (Date.now() < this.rateLimitedUntil) return true;
+        // Limit expired — clear it
+        this.rateLimitedUntil = null;
+        console.log('✅ Gemini rate limit window cleared — resuming API calls');
+        return false;
+    }
+
+    /** Extract retryDelay seconds from a 429 error and set rateLimitedUntil */
+    handleRateLimit(error) {
+        const isQuota = error?.status === 429;
+        if (!isQuota) return;
+        // Try to parse the retryDelay from errorDetails
+        let delaySecs = 60; // safe default
+        try {
+            const retryInfo = error.errorDetails?.find(d => d['@type']?.includes('RetryInfo'));
+            if (retryInfo?.retryDelay) {
+                delaySecs = parseInt(retryInfo.retryDelay) + 5; // +5s buffer
+            }
+        } catch (_) { }
+        this.rateLimitedUntil = Date.now() + delaySecs * 1000;
+        const waitMin = Math.ceil(delaySecs / 60);
+        console.warn(`⚠️  Gemini 429: rate limited for ${delaySecs}s (~${waitMin} min). Using template fallback until then.`);
+    }
+
+    // ─── Template-based opening questions ──────────────────────────────────────
+    getTemplateOpeningQuestion(session) {
+        const { mode, scenario, difficulty } = session;
+        const role = (scenario?.role || 'professional').toLowerCase();
+        const company = scenario?.company ? ` at ${scenario.company}` : '';
+        const lvl = difficulty || 'medium';
+
+        // Mode-specific openers
+        if (mode === 'drill') {
+            const drillQuestions = [
+                `Let's do a rapid-fire drill. I'll give you 60 seconds: describe your biggest technical challenge to date as ${role}.`,
+                `Drill mode. No preamble — directly state the most important skill that makes you qualified as a ${role}.`,
+                `Speed round: What's the single most impactful project you've delivered as a ${role}? Be specific.`,
+            ];
+            return drillQuestions[Math.floor(Math.random() * drillQuestions.length)];
+        }
+
+        if (mode === 'presentation') {
+            return `You have 2 minutes. Pitch yourself for the ${role} role${company} — structure it as Problem → Solution → Impact.`;
+        }
+
+        // Interview mode — keyed by difficulty
+        const byDifficulty = {
+            easy: [
+                `Welcome! To start, tell me about your background and what excites you most about the ${role} role${company}.`,
+                `Let's begin. Walk me through your experience that's most relevant to the ${role} position.`,
+                `Hi! Tell me — what made you pursue a career in this field, and what draws you to the ${role} opportunity?`,
+            ],
+            medium: [
+                `Tell me about a time you had to make a difficult decision without all the information you needed. What was your process?`,
+                `As a ${role}, describe the most complex problem you've solved end-to-end. Take me through your thinking.`,
+                `What's the biggest failure in your career so far, and how did it change the way you work?`,
+                `Walk me through a situation where you had to lead or influence without formal authority.`,
+            ],
+            hard: [
+                `You have 90 seconds. Tell me about a time a project you owned failed to meet expectations — what was YOUR specific contribution to that failure and what would you do differently?`,
+                `Describe the most technically complex or strategically ambiguous challenge you've faced as a ${role}. I'll push back on your answer.`,
+                `What's the most controversial decision you've made in your career? Walk me through the trade-offs you weighed.`,
+                `Tell me about a time a senior stakeholder disagreed with your recommendation. How did you handle it — and who was right?`,
+            ],
+        };
+
+        const pool = byDifficulty[lvl] || byDifficulty.medium;
+        return pool[Math.floor(Math.random() * pool.length)];
+    }
+
+    // ─── Template-based probe questions (used when API is down) ────────────────
+    getTemplateProbeFallback(partialTranscript) {
+        const probes = [
+            'Can you be more specific? What was your exact role in that?',
+            'Tell me more — what was the measurable outcome of that?',
+            'Pause there. What was the biggest risk in that approach?',
+            'Good. Now quantify it — what was the actual impact?',
+            'Interesting. What would you do differently if you had to do it again?',
+        ];
+        return probes[Math.floor(Math.random() * probes.length)];
     }
 
     /**
@@ -88,69 +169,13 @@ Return ONLY the JSON object, no additional text.`;
      * @returns {Promise<object>} Decision object
      */
     async evaluate(sessionId, partialTranscript) {
-        try {
-            if (!this.model) {
-                throw new Error('Gemini model not initialized');
-            }
-
-            // Fetch session
-            const session = await Session.findById(sessionId);
-            if (!session) {
-                throw new Error('Session not found');
-            }
-
-            // Build prompt
-            const prompt = this.buildPrompt(session, partialTranscript, session.conversationHistory);
-
-            // Call Gemini
-            const result = await this.model.generateContent(prompt);
-            const response = await result.response;
-            const text = response.text();
-
-            // Parse JSON response
-            const cleanedText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-            const decision = JSON.parse(cleanedText);
-
-            // Validate decision
-            const validActions = ['CONTINUE_LISTENING', 'INTERRUPT', 'PROBE_DEEPER', 'CHANGE_DIRECTION', 'MOVE_FORWARD'];
-            if (!validActions.includes(decision.action)) {
-                console.warn('Invalid action from Gemini:', decision.action);
-                decision.action = 'CONTINUE_LISTENING';
-            }
-
-            // Update session state if weakness detected
-            if (decision.weaknessDetected && session.state.weaknessTracker[decision.weaknessDetected] !== undefined) {
-                session.state.weaknessTracker[decision.weaknessDetected] += 1;
-            }
-
-            // Adjust difficulty curve
-            if (decision.difficultyAdjustment) {
-                session.state.difficultyCurve = Math.max(0, Math.min(10,
-                    session.state.difficultyCurve + decision.difficultyAdjustment
-                ));
-            }
-
-            // Update interruption or probe counts
-            if (decision.action === 'INTERRUPT') {
-                session.state.interruptionCount += 1;
-            } else if (decision.action === 'PROBE_DEEPER') {
-                session.state.probeDepthCount += 1;
-            }
-
-            await session.save();
-
-            return decision;
-
-        } catch (error) {
-            console.error('Decision engine error:', error);
-            // Fallback to safe default
-            return {
-                action: 'CONTINUE_LISTENING',
-                response: '',
-                reason: 'Error in evaluation',
-                weaknessDetected: null
-            };
-        }
+        // AI interruption and live evaluation is disabled for clean platform operation
+        return {
+            action: 'CONTINUE_LISTENING',
+            response: '',
+            reason: 'Live AI interruption disabled',
+            weaknessDetected: null
+        };
     }
 
     /**
@@ -160,17 +185,18 @@ Return ONLY the JSON object, no additional text.`;
      */
     async generateOpeningQuestion(sessionId) {
         try {
-            if (!this.model) {
-                throw new Error('Gemini model not initialized');
-            }
-
             const session = await Session.findById(sessionId);
-            if (!session) {
-                throw new Error('Session not found');
+            if (!session) throw new Error('Session not found');
+
+            // If rate-limited or no model — use smart template immediately
+            if (this.isRateLimited() || !this.model) {
+                const question = this.getTemplateOpeningQuestion(session);
+                console.log('📋 Using template opening question (API unavailable)');
+                await session.addTranscript('ai', question);
+                return question;
             }
 
             const { mode, scenario, difficulty } = session;
-
             const prompt = `You are conducting a ${mode} session for the role of ${scenario.role}${scenario.company ? ` at ${scenario.company}` : ''}.
 
 Difficulty level: ${difficulty}
@@ -187,22 +213,21 @@ Return ONLY the question text, no additional commentary.`;
             const response = await result.response;
             const question = response.text().trim();
 
-            // Store in conversation history
-            session.conversationHistory.push({
-                role: 'ai',
-                content: question,
-                timestamp: new Date()
-            });
-
+            session.conversationHistory.push({ role: 'ai', content: question, timestamp: new Date() });
             session.systemPrompt = prompt;
             await session.save();
 
             return question;
 
         } catch (error) {
-            console.error('Failed to generate opening question:', error);
-            // Fallback to a safe default question if session fetch fails
-            return "Hello! I'm your interviewer today. To get started, could you please introduce yourself and tell me about your background?";
+            this.handleRateLimit(error);
+            console.error('Failed to generate opening question:', error.message || error);
+            // Always return a contextual fallback — never a blank or generic message
+            try {
+                const session = await Session.findById(sessionId);
+                if (session) return this.getTemplateOpeningQuestion(session);
+            } catch (_) { }
+            return "Let's begin. Walk me through your most relevant experience for this role.";
         }
     }
 }

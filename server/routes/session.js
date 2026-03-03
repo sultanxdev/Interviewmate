@@ -35,10 +35,10 @@ router.post('/create',
                 duration
             } = req.body;
 
-            const userId = req.user.id;
+            const userId = req.userId;
 
             // Calculate token cost
-            const tokenCost = tokenService.calculateSessionCost({ mode, duration, difficulty });
+            const tokenCost = tokenService.calculateSessionCost();
 
             // Check if user has enough tokens
             const hasEnoughTokens = await tokenService.checkBalance(userId, tokenCost);

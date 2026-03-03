@@ -1,7 +1,7 @@
 import express from 'express';
 import analyticsService from '../services/analytics/analyticsService.js';
 import { auth } from '../middleware/auth.js';
-import { query } from 'express-validator';
+// Clean API endpoint to receive chat and respond
 
 const router = express.Router();
 
@@ -12,7 +12,7 @@ const router = express.Router();
  */
 router.get('/overview', auth, async (req, res) => {
     try {
-        const analytics = await analyticsService.getUserAnalytics(req.user.id);
+        const analytics = await analyticsService.getUserAnalytics(req.userId);
         res.json(analytics);
     } catch (error) {
         console.error('Get analytics error:', error);
@@ -35,7 +35,7 @@ router.get('/skill/:skillName', auth, async (req, res) => {
             return res.status(400).json({ message: 'Invalid skill name' });
         }
 
-        const insights = await analyticsService.getSkillInsights(req.user.id, skillName);
+        const insights = await analyticsService.getSkillInsights(req.userId, skillName);
         res.json(insights);
 
     } catch (error) {

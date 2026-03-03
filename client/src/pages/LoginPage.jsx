@@ -176,14 +176,14 @@ const LoginPage = () => {
               </div>
 
               {/* Google OAuth Button */}
-              <div className="flex justify-center">
+              <div className="w-full">
                 <GoogleLogin
                   onSuccess={handleGoogleSuccess}
                   onError={handleGoogleError}
-                  useOneTap
-                  theme="filled_blue"
+                  useOneTap={false}
+                  theme="outline"
                   shape="rectangular"
-                  width="100%"
+                  width={380}
                 />
               </div>
             </form>

@@ -26,7 +26,8 @@ const GoogleAuth = ({ onSuccess, onError, buttonText = "Continue with Google" })
           {
             theme: 'outline',
             size: 'large',
-            width: '100%',
+            // GSI only accepts integer px — read the container width
+            width: document.getElementById('google-signin-button')?.offsetWidth || 400,
             text: 'continue_with',
             shape: 'rectangular'
           }

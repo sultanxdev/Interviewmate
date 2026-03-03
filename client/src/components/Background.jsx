@@ -1,24 +1,34 @@
 import React from 'react';
 
+/**
+ * Animated ambient background — works in both light and dark mode.
+ * Uses CSS custom properties from index.css.
+ */
 const Background = () => {
     return (
-        <div className="fixed inset-0 z-[-1] overflow-hidden pointer-events-none">
-            <div
-                className="absolute inset-0"
+        <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none" aria-hidden="true">
+            {/* Main gradient */}
+            <div className="absolute inset-0"
                 style={{
-                    backgroundImage: `
-            linear-gradient(180deg, 
-              rgba(255,247,237,1) 0%, 
-              rgba(255,237,213,0.8) 25%, 
-              rgba(254,215,170,0.6) 50%, 
-              rgba(251,146,60,0.4) 75%, 
-              rgba(249,115,22,0.3) 100%
-            ),
-            radial-gradient(circle at 20% 80%, rgba(255,255,255,0.6) 0%, transparent 40%),
-            radial-gradient(circle at 80% 20%, rgba(254,215,170,0.5) 0%, transparent 50%),
-            radial-gradient(circle at 60% 60%, rgba(252,165,165,0.3) 0%, transparent 45%)
-          `,
+                    background: `
+                        radial-gradient(ellipse 80% 60% at 50% -20%, hsl(var(--primary)/0.18) 0%, transparent 70%),
+                        radial-gradient(ellipse 60% 40% at 80% 80%, hsl(var(--accent)/0.14) 0%, transparent 60%),
+                        hsl(var(--background))
+                    `,
                 }}
+            />
+
+            {/* Subtle grid dot pattern */}
+            <div className="absolute inset-0 grid-bg opacity-40" />
+
+            {/* Animated orbs */}
+            <div
+                className="absolute top-1/4 left-1/4 h-[500px] w-[500px] rounded-full blur-[120px] opacity-[0.07] animate-float"
+                style={{ background: 'hsl(var(--primary))' }}
+            />
+            <div
+                className="absolute bottom-1/4 right-1/4 h-[400px] w-[400px] rounded-full blur-[100px] opacity-[0.05] animate-float"
+                style={{ background: '#f59e0b', animationDelay: '1.5s' }}
             />
         </div>
     );

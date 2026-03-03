@@ -13,8 +13,8 @@ const router = express.Router();
 
 // Initialize Gemini AI
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const primaryModel = genAI.getGenerativeModel({ model: process.env.GEMINI_MODEL || "gemini-1.5-pro" });
-const fallbackModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+const primaryModel = genAI.getGenerativeModel({ model: process.env.GEMINI_MODEL || "gemini-2.0-flash" });
+const fallbackModel = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
 // Helper function to try multiple models
 const generateWithFallback = async (prompt) => {
@@ -43,8 +43,8 @@ router.post('/generate-questions', auth, [
 
     // Check if user can take interview
     if (!req.user.canTakeInterview()) {
-      return res.status(403).json({ 
-        message: 'Daily interview limit reached. Upgrade to Pro for unlimited interviews.' 
+      return res.status(403).json({
+        message: 'Daily interview limit reached. Upgrade to Pro for unlimited interviews.'
       });
     }
 
@@ -76,43 +76,43 @@ Return ONLY a JSON array of questions in this format:
 ]`;
 
     let questions;
-    
+
     // Helper function to retry Gemini API calls with fallback models
     const retryGeminiCall = async (prompt, maxRetries = 2) => {
       for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
           const response = await generateWithFallback(prompt);
           let text = response.text();
-          
+
           // Clean up Gemini's response - remove markdown code blocks
           text = text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
-          
+
           // Try to extract JSON if it's wrapped in other text
           const jsonMatch = text.match(/\[[\s\S]*\]/);
           if (jsonMatch) {
             text = jsonMatch[0];
           }
-          
+
           return JSON.parse(text);
         } catch (error) {
           console.log(`Gemini API attempt ${attempt} failed:`, error.message);
-          
+
           if (attempt === maxRetries) {
             throw error;
           }
-          
+
           // Wait before retrying (exponential backoff)
           await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
         }
       }
     };
-    
+
     try {
       const prompt = `${systemPrompt}\n\nGenerate ${numberOfQuestions} interview questions for this ${interviewType} interview.`;
       questions = await retryGeminiCall(prompt);
     } catch (geminiError) {
       console.error('Gemini API Error after retries:', geminiError.message);
-      
+
       // Fallback to mock questions when Gemini fails
       const mockQuestions = {
         'HR': [
@@ -144,7 +144,7 @@ Return ONLY a JSON array of questions in this format:
         type: interviewType.toLowerCase(),
         expectedDuration: 3
       }));
-      
+
       console.log('Using mock questions due to Gemini API issue');
     }
 
@@ -169,7 +169,7 @@ Return ONLY a JSON array of questions in this format:
     // Update user's daily interview count
     const today = new Date().toDateString();
     const lastInterviewDate = req.user.lastInterviewDate ? req.user.lastInterviewDate.toDateString() : null;
-    
+
     if (lastInterviewDate !== today) {
       req.user.dailyInterviewCount = 1;
     } else {
@@ -195,9 +195,9 @@ router.post('/submit-answer', auth, async (req, res) => {
   try {
     const { interviewId, questionIndex, answer } = req.body;
 
-    const interview = await Interview.findOne({ 
-      _id: interviewId, 
-      userId: req.userId 
+    const interview = await Interview.findOne({
+      _id: interviewId,
+      userId: req.userId
     });
 
     if (!interview) {
@@ -225,9 +225,9 @@ Respond with either:
 - "NO_FOLLOWUP"`;
 
     const prompt = `${systemPrompt}\n\nShould I ask a follow-up question?`;
-    
+
     let followUpQuestion = null;
-    
+
     try {
       const response = await generateWithFallback(prompt);
       const followUpResponse = response.text().trim();
@@ -267,9 +267,9 @@ router.post('/complete', auth, async (req, res) => {
       return res.status(400).json({ message: 'Invalid interview ID format' });
     }
 
-    const interview = await Interview.findOne({ 
-      _id: interviewId, 
-      userId: req.userId 
+    const interview = await Interview.findOne({
+      _id: interviewId,
+      userId: req.userId
     });
 
     if (!interview) {
@@ -281,7 +281,7 @@ router.post('/complete', auth, async (req, res) => {
     }
 
     // Generate comprehensive evaluation using GPT
-    const transcript = interview.questions.map((q, index) => 
+    const transcript = interview.questions.map((q, index) =>
       `Q${index + 1}: ${q.question}\nA${index + 1}: ${q.userAnswer}`
     ).join('\n\n');
 
@@ -309,26 +309,26 @@ Provide a comprehensive evaluation in the following JSON format:
 Score each skill out of 100. Be constructive and specific in feedback.`;
 
     const prompt = `${evaluationPrompt}\n\nPlease evaluate this interview performance.`;
-    
+
     let evaluation;
-    
+
     try {
       const response = await generateWithFallback(prompt);
-      
+
       let evalText = response.text();
       // Clean up Gemini's response - remove markdown code blocks
       evalText = evalText.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
-      
+
       // Try to extract JSON if it's wrapped in other text
       const jsonMatch = evalText.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         evalText = jsonMatch[0];
       }
-      
+
       evaluation = JSON.parse(evalText);
     } catch (geminiError) {
       console.error('Gemini API Error for evaluation:', geminiError.message);
-      
+
       // Fallback evaluation if Gemini fails
       evaluation = {
         overallScore: 75,
@@ -405,7 +405,7 @@ router.get('/report/:id', auth, async (req, res) => {
 router.get('/history', auth, async (req, res) => {
   try {
     const { page = 1, limit = 10, role, type, sortBy = 'createdAt' } = req.query;
-    
+
     const filter = { userId: req.userId, status: 'completed' };
     if (role) filter.role = new RegExp(role, 'i');
     if (type) filter.interviewType = type;

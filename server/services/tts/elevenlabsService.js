@@ -8,48 +8,49 @@ import { ElevenLabsClient } from 'elevenlabs';
 class ElevenLabsService {
     constructor() {
         this.apiKey = process.env.ELEVENLABS_API_KEY;
+        this.enabled = false;
+
         if (!this.apiKey) {
-            console.warn('ELEVENLABS_API_KEY not set - TTS service will not function');
+            console.warn('⚠️  ELEVENLABS_API_KEY not set - TTS will be text-only');
         } else {
-            console.log('✅ ElevenLabs service initialized with API key');
+            try {
+                this.client = new ElevenLabsClient({ apiKey: this.apiKey });
+                this.enabled = true;
+                console.log('✅ ElevenLabs service initialized');
+            } catch (err) {
+                console.warn('⚠️  ElevenLabs client failed to initialize:', err.message);
+            }
         }
 
-        // Professional neutral female voice ID (Rachel)
+        // Rachel — professional neutral voice
         this.defaultVoiceId = '21m00Tcm4TlvDq8ikWAM';
-
-        this.client = null;
-        if (this.apiKey) {
-            this.client = new ElevenLabsClient({
-                apiKey: this.apiKey
-            });
-        }
     }
 
     /**
      * Convert text to speech
-     * @param {string} text - Text to convert
-     * @param {string} voiceId - Optional voice ID (defaults to professional female)
-     * @returns {Promise<Buffer>} Audio buffer
+     * Returns a Buffer, or null if TTS is unavailable
+     * (callers should gracefully handle null — text-only fallback)
      */
     async textToSpeech(text, voiceId = null) {
+        if (!this.enabled || !this.client) {
+            console.log('TTS skipped — ElevenLabs not available, using text-only mode');
+            return null;
+        }
+
+        if (!text || text.trim().length === 0) {
+            return null;
+        }
+
         try {
-            if (!this.client) {
-                throw new Error('ElevenLabs not initialized - API key missing');
-            }
-
-            if (!text || text.trim().length === 0) {
-                throw new Error('Text is required for TTS');
-            }
-
             const selectedVoiceId = voiceId || this.defaultVoiceId;
 
             const audio = await this.client.generate({
                 voice: selectedVoiceId,
                 text: text.trim(),
-                model_id: 'eleven_monolingual_v1'
+                model_id: 'eleven_monolingual_v1',
             });
 
-            // Convert async iterable to buffer
+            // Collect async iterable chunks into a Buffer
             const chunks = [];
             for await (const chunk of audio) {
                 chunks.push(chunk);
@@ -58,36 +59,35 @@ class ElevenLabsService {
             return Buffer.concat(chunks);
 
         } catch (error) {
-            console.error('ElevenLabs TTS error:', error.message);
-            // Return null instead of throwing to prevent crashing the flow
-            // The client will just show text if audio is missing
-            return null;
+            // 401 = invalid key, 403 = quota, 422 = bad params
+            const status = error?.statusCode || error?.status;
+            if (status === 401) {
+                console.warn('⚠️  ElevenLabs: Invalid API key — disabling TTS for this session');
+                this.enabled = false; // Stop retrying every call
+            } else {
+                console.error('ElevenLabs TTS error:', error?.message || error);
+            }
+            return null; // Always return null — never crash the session
         }
     }
 
     /**
-     * Text to speech with streaming (for real-time playback)
+     * Text to speech with streaming
      */
     async textToSpeechStream(text, voiceId = null) {
+        if (!this.enabled || !this.client) return null;
+
         try {
-            if (!this.client) {
-                throw new Error('ElevenLabs not initialized');
-            }
-
             const selectedVoiceId = voiceId || this.defaultVoiceId;
-
-            const audio = await this.client.generate({
+            return await this.client.generate({
                 voice: selectedVoiceId,
                 text: text.trim(),
                 model_id: 'eleven_monolingual_v1',
-                stream: true
+                stream: true,
             });
-
-            return audio;
-
         } catch (error) {
-            console.error('ElevenLabs TTS streaming error:', error);
-            throw error;
+            console.error('ElevenLabs TTS streaming error:', error?.message || error);
+            return null;
         }
     }
 
@@ -95,20 +95,15 @@ class ElevenLabsService {
      * Get available voices
      */
     async getVoices() {
+        if (!this.enabled || !this.client) return [];
         try {
-            if (!this.client) {
-                throw new Error('ElevenLabs not initialized');
-            }
-
             const voices = await this.client.voices.getAll();
             return voices || [];
-
         } catch (error) {
-            console.error('Failed to fetch voices:', error);
+            console.error('Failed to fetch ElevenLabs voices:', error?.message || error);
             return [];
         }
     }
 }
 
-// Export singleton instance
 export default new ElevenLabsService();

@@ -35,17 +35,18 @@ export const registerSessionHandlers = (io, socket) => {
                 return socket.emit('session:error', { message: 'Unauthorized' });
             }
 
-            if (session.status !== 'initialized' && session.status !== 'paused') {
-                return socket.emit('session:error', { message: 'Session already in progress or completed' });
+            // Block only truly terminal states
+            if (session.status === 'completed' || session.status === 'abandoned') {
+                return socket.emit('session:error', { message: 'Session already completed or abandoned' });
             }
 
             // Join Socket.IO room
             socket.join(`session-${sessionId}`);
             socket.sessionId = sessionId;
 
-            console.log(`User ${userId} joined session ${sessionId}`);
+            console.log(`User ${userId} joined session ${sessionId} (status: ${session.status})`);
 
-            // Emit joined confirmation FIRST to prepare client
+            // Always send joined confirmation first
             socket.emit('session:joined', {
                 sessionId,
                 mode: session.mode,
@@ -54,44 +55,79 @@ export const registerSessionHandlers = (io, socket) => {
                 skillsToEvaluate: session.skillsToEvaluate
             });
 
-            // Mark session as started if first time
+            // ── Case 1: Fresh session — generate opening question ────────────
             if (session.status === 'initialized') {
                 await session.start();
 
-                // Generate opening question
                 console.log(`Generating opening question for session ${sessionId}...`);
                 const openingText = await decisionEngine.generateOpeningQuestion(sessionId);
 
-                // Generate audio for opening question
+                // TTS (graceful — returns null if unavailable)
                 let openingAudioBase64 = null;
                 try {
-                    const openingAudioBuffer = await ttsService.textToSpeech(openingText);
-                    if (openingAudioBuffer) {
-                        openingAudioBase64 = openingAudioBuffer.toString('base64');
-                    }
+                    const buf = await ttsService.textToSpeech(openingText);
+                    if (buf) openingAudioBase64 = buf.toString('base64');
                 } catch (err) {
                     console.error('TTS failed for opening question:', err.message);
                 }
 
-                // Emit session:started with content
-                io.to(`session-${sessionId}`).emit('session:started', {
+                socket.emit('session:started', {
                     sessionId,
                     openingText,
                     openingAudio: openingAudioBase64
                 });
 
-                // Add to transcript
                 await session.addTranscript('ai', openingText);
+                return;
             }
 
-            // Note: Opening AI question will be generated and sent separately
-            // by the AI initialization handler (to be implemented next)
+            // ── Case 2: Already active — reconnect, replay opening question ──
+            if (session.status === 'active') {
+                console.log(`Reconnecting to active session ${sessionId} — replaying opening`);
+                const aiOpener = session.transcript?.find(t => t.speaker === 'ai');
+                const openingText = aiOpener?.text
+                    || decisionEngine.getTemplateOpeningQuestion(session);
+
+                socket.emit('session:started', {
+                    sessionId,
+                    openingText,
+                    openingAudio: null
+                });
+                return;
+            }
+
+            // ── Case 3: Paused — resume, restore state ───────────────────────
+            if (session.status === 'paused') {
+                // Restore to active
+                session.status = 'active';
+                await session.save();
+
+                // Resend opening question from transcript
+                const aiOpener = session.transcript?.find(t => t.speaker === 'ai');
+                const openingText = aiOpener?.text || decisionEngine.getTemplateOpeningQuestion(session);
+
+                socket.emit('session:started', {
+                    sessionId,
+                    openingText,
+                    openingAudio: null
+                });
+
+                // Also resend any existing transcript entries
+                if (session.transcript?.length > 1) {
+                    socket.emit('session:transcript_restore', {
+                        transcript: session.transcript
+                    });
+                }
+                return;
+            }
+
 
         } catch (error) {
             console.error('Session join error:', error);
             socket.emit('session:error', { message: 'Failed to join session', error: error.message });
         }
     });
+
 
     /**
      * Event: session:pause

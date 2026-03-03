@@ -175,7 +175,7 @@ class TokenService {
 
             const transaction = new TokenTransaction({
                 userId,
-                type: source === 'purchase' ? 'purchase' : 'credit',
+                type: source === 'purchase' ? 'purchase' : source === 'subscription_credit' ? 'subscription_credit' : 'credit',
                 amount,
                 balanceBefore,
                 balanceAfter,
@@ -203,13 +203,10 @@ class TokenService {
     /**
      * Calculate token cost for a session based on configuration
      */
-    calculateSessionCost(sessionConfig) {
-        let baseCost = SESSION_TOKEN_COST;
-
+    calculateSessionCost() {
         // Future: Could adjust cost based on duration, difficulty, etc.
         // For now, flat rate
-
-        return baseCost;
+        return SESSION_TOKEN_COST;
     }
 
     /**

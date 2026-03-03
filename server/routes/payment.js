@@ -3,8 +3,16 @@ import Razorpay from 'razorpay';
 import crypto from 'crypto';
 import { auth } from '../middleware/auth.js';
 import User from '../models/User.js';
+import Payment from '../models/Payment.js';
+import tokenService from '../services/token/tokenService.js';
 
 const router = express.Router();
+
+// Plans configuration (tokens granted per plan)
+const PLAN_TOKENS = {
+  pro_monthly: 500,
+  pro_yearly: 7000
+};
 
 // Lazy-initialize Razorpay (after env vars are loaded)
 let razorpay = null;
@@ -47,6 +55,19 @@ router.post('/create-order', auth, async (req, res) => {
     };
 
     const order = await getRazorpay().orders.create(options);
+
+    // Save pending payment record
+    const payment = new Payment({
+      userId: req.userId,
+      razorpayOrderId: order.id,
+      amount: amount,
+      currency: 'INR',
+      plan: plan,
+      status: 'created',
+      receipt: options.receipt,
+      notes: options.notes
+    });
+    await payment.save();
 
     res.json({
       orderId: order.id,
@@ -98,10 +119,33 @@ router.post('/verify-payment', auth, async (req, res) => {
       expiryDate = new Date(now.setFullYear(now.getFullYear() + 1));
     }
 
-    // Update user
+    // Update user subscription
     user.subscription = 'pro';
     user.subscriptionExpiry = expiryDate;
     await user.save();
+
+    // Update payment record to paid
+    const payment = await Payment.findOne({ razorpayOrderId: razorpay_order_id });
+    if (payment) {
+      payment.razorpayPaymentId = razorpay_payment_id;
+      payment.razorpaySignature = razorpay_signature;
+      payment.status = 'paid';
+      payment.subscriptionStartDate = new Date();
+      payment.subscriptionEndDate = expiryDate;
+      await payment.save();
+
+      // Credit subscription tokens to user
+      const tokensToCredit = PLAN_TOKENS[plan] || 0;
+      if (tokensToCredit > 0) {
+        await tokenService.addTokens(
+          req.userId,
+          tokensToCredit,
+          'subscription_credit',
+          payment._id,
+          `${plan} subscription token grant`
+        );
+      }
+    }
 
     res.json({
       message: 'Payment verified and subscription updated successfully',
