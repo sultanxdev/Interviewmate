@@ -83,7 +83,7 @@ const SessionSetup = () => {
     const inputStyle = { borderColor: 'hsl(var(--border))', color: 'hsl(var(--foreground))' };
 
     return (
-        <div className="min-h-screen py-14 px-4" style={{ background: 'hsl(var(--background))' }}>
+        <div className="min-h-screen py-14 px-4">
             <div className="max-w-3xl mx-auto">
 
                 {/* Back */}

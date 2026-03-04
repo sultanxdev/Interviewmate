@@ -1,10 +1,28 @@
 import express from 'express';
+import multer from 'multer';
 import Session from '../models/Session.js';
 import tokenService from '../services/token/tokenService.js';
+import decisionEngine from '../services/llm/decisionEngine.js';
+import ttsService from '../services/tts/elevenlabsService.js';
+import sttService from '../services/stt/elevenlabsSTT.js';
 import { auth } from '../middleware/auth.js';
 import { body, param, validationResult } from 'express-validator';
 
 const router = express.Router();
+
+// Multer for audio uploads (in-memory, max 25MB)
+const audioUpload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 25 * 1024 * 1024 },
+    fileFilter: (req, file, cb) => {
+        const allowed = ['audio/webm', 'audio/mp4', 'audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg'];
+        if (allowed.includes(file.mimetype) || file.fieldname === 'audio') {
+            cb(null, true);
+        } else {
+            cb(new Error(`Unsupported audio format: ${file.mimetype}`));
+        }
+    }
+});
 
 /**
  * @route   POST /api/session/create
@@ -27,14 +45,7 @@ router.post('/create',
                 return res.status(400).json({ errors: errors.array() });
             }
 
-            const {
-                mode,
-                scenario,
-                skillsToEvaluate,
-                difficulty,
-                duration
-            } = req.body;
-
+            const { mode, scenario, skillsToEvaluate, difficulty, duration } = req.body;
             const userId = req.userId;
 
             // Calculate token cost
@@ -42,7 +53,6 @@ router.post('/create',
 
             // Check if user has enough tokens
             const hasEnoughTokens = await tokenService.checkBalance(userId, tokenCost);
-
             if (!hasEnoughTokens) {
                 return res.status(402).json({
                     message: 'Insufficient tokens',
@@ -66,7 +76,7 @@ router.post('/create',
 
             await session.save();
 
-            // Lock tokens for this session
+            // Lock tokens
             const transactionId = await tokenService.lockTokens(
                 userId,
                 tokenCost,
@@ -74,7 +84,6 @@ router.post('/create',
                 `Tokens locked for ${mode} session`
             );
 
-            // Update session with transaction reference
             session.tokenTransaction = transactionId;
             await session.save();
 
@@ -87,13 +96,220 @@ router.post('/create',
                     tokensLocked: tokenCost,
                     difficulty: session.difficulty,
                     duration: session.duration
-                },
-                websocketUrl: `${process.env.CLIENT_URL || 'http://localhost:5173'}/session/${session._id}`
+                }
             });
 
         } catch (error) {
             console.error('Session creation error:', error);
             res.status(500).json({ message: 'Failed to create session', error: error.message });
+        }
+    }
+);
+
+/**
+ * @route   POST /api/session/:id/start
+ * @desc    Start a session — generates opening question via LLM + TTS audio
+ * @access  Private
+ */
+router.post('/:id/start',
+    auth,
+    param('id').isMongoId(),
+    async (req, res) => {
+        try {
+            const session = await Session.findById(req.params.id);
+
+            if (!session) {
+                return res.status(404).json({ message: 'Session not found' });
+            }
+
+            if (session.userId.toString() !== req.userId) {
+                return res.status(403).json({ message: 'Unauthorized' });
+            }
+
+            // If already active, replay the existing opening question
+            if (session.status === 'active' || session.status === 'paused') {
+                const aiOpener = session.transcript?.find(t => t.speaker === 'ai');
+                const openingText = aiOpener?.text || decisionEngine.getTemplateOpeningQuestion(session);
+
+                // Regenerate TTS for re-visits (graceful null if unavailable)
+                let openingAudioBase64 = null;
+                try {
+                    const buf = await ttsService.textToSpeech(openingText);
+                    if (buf) openingAudioBase64 = buf.toString('base64');
+                } catch (_) { }
+
+                return res.json({
+                    sessionId: session._id,
+                    openingText,
+                    openingAudio: openingAudioBase64,
+                    mode: session.mode,
+                    difficulty: session.difficulty,
+                    duration: session.duration,
+                    turnIndex: session.conversationHistory.filter(h => h.role === 'user').length,
+                    transcript: session.transcript || []
+                });
+            }
+
+            // Fresh session — mark active
+            if (session.status !== 'initialized') {
+                return res.status(400).json({ message: `Cannot start session in status: ${session.status}` });
+            }
+
+            await session.start();
+
+            // Generate opening question
+            console.log(`Generating opening question for session ${session._id}...`);
+            const openingText = await decisionEngine.generateOpeningQuestion(session._id);
+
+            // TTS for opening question (graceful null if unavailable)
+            let openingAudioBase64 = null;
+            try {
+                const buf = await ttsService.textToSpeech(openingText);
+                if (buf) openingAudioBase64 = buf.toString('base64');
+            } catch (err) {
+                console.error('TTS failed for opening question:', err.message);
+            }
+
+            // Save opening question to transcript + conversation history
+            await session.addTranscript('ai', openingText);
+            session.conversationHistory.push({ role: 'ai', content: openingText, timestamp: new Date() });
+            await session.save();
+
+            console.log(`✅ Session ${session._id} started`);
+
+            res.json({
+                sessionId: session._id,
+                openingText,
+                openingAudio: openingAudioBase64,
+                mode: session.mode,
+                difficulty: session.difficulty,
+                duration: session.duration,
+                turnIndex: 0,
+                transcript: session.transcript
+            });
+
+        } catch (error) {
+            console.error('Session start error:', error);
+            res.status(500).json({ message: 'Failed to start session', error: error.message });
+        }
+    }
+);
+
+/**
+ * @route   POST /api/session/:id/turn
+ * @desc    Submit user audio answer → STT → save → LLM next Q → TTS → return
+ * @access  Private
+ * 
+ * Body (multipart/form-data):
+ *   - audio: audio file blob
+ *   - mimeType: string (optional, e.g. 'audio/webm')
+ *   - turnIndex: number (current turn index)
+ */
+router.post('/:id/turn',
+    auth,
+    audioUpload.single('audio'),
+    async (req, res) => {
+        try {
+            const session = await Session.findById(req.params.id);
+
+            if (!session) {
+                return res.status(404).json({ message: 'Session not found' });
+            }
+
+            if (session.userId.toString() !== req.userId) {
+                return res.status(403).json({ message: 'Unauthorized' });
+            }
+
+            if (session.status !== 'active') {
+                return res.status(400).json({ message: `Session is not active (status: ${session.status})` });
+            }
+
+            // ── Step 1: Speech-to-Text ─────────────────────────────────────────
+            let userTranscript = req.body.fallbackText || '';
+
+            if (req.file) {
+                const mimeType = req.body.mimeType || req.file.mimetype || 'audio/webm';
+                console.log(`Processing audio for session ${session._id}: ${req.file.size} bytes, type: ${mimeType}`);
+
+                const transcribed = await sttService.transcribe(req.file.buffer, mimeType);
+                if (transcribed && transcribed.trim().length > 0) {
+                    userTranscript = transcribed;
+                } else {
+                    console.warn('STT returned empty transcript');
+                }
+            }
+
+            if (!userTranscript || userTranscript.trim().length === 0) {
+                return res.status(422).json({
+                    message: 'Could not understand audio. Please try again.',
+                    hint: 'Speak clearly and ensure microphone access is granted.'
+                });
+            }
+
+            // ── Step 2: Save user answer ───────────────────────────────────────
+            await session.addTranscript('user', userTranscript);
+            session.conversationHistory.push({
+                role: 'user',
+                content: userTranscript,
+                timestamp: new Date()
+            });
+            await session.save();
+
+            // ── Step 3: Generate AI next question/response ─────────────────────
+            const userTurnCount = session.conversationHistory.filter(h => h.role === 'user').length;
+            const turnIndex = parseInt(req.body.turnIndex || '0') || (userTurnCount - 1);
+
+            const { text: aiResponseText, isComplete } = await decisionEngine.generateNextQuestion(
+                session._id,
+                userTranscript,
+                turnIndex
+            );
+
+            // ── Step 4: TTS for AI response ────────────────────────────────────
+            let aiAudioBase64 = null;
+            try {
+                const audioBuf = await ttsService.textToSpeech(aiResponseText);
+                if (audioBuf) aiAudioBase64 = audioBuf.toString('base64');
+            } catch (err) {
+                console.error('TTS error for AI response:', err.message);
+            }
+
+            // ── Step 5: Save AI response ───────────────────────────────────────
+            await session.addTranscript('ai', aiResponseText);
+            session.conversationHistory.push({
+                role: 'ai',
+                content: aiResponseText,
+                timestamp: new Date()
+            });
+
+            // If interview is complete, mark session as such
+            if (isComplete) {
+                await session.complete();
+                if (session.tokenTransaction) {
+                    try {
+                        await tokenService.deductTokens(session.tokenTransaction);
+                        session.tokensUsed = session.tokensLocked;
+                    } catch (err) {
+                        console.error('Token deduction error:', err.message);
+                    }
+                }
+            } else {
+                await session.save();
+            }
+
+            console.log(`✅ Turn ${turnIndex + 1} complete for session ${session._id} — isComplete: ${isComplete}`);
+
+            res.json({
+                userTranscript,
+                aiResponse: aiResponseText,
+                aiAudio: aiAudioBase64,
+                isComplete,
+                turnIndex: turnIndex + 1
+            });
+
+        } catch (error) {
+            console.error('Session turn error:', error);
+            res.status(500).json({ message: 'Failed to process turn', error: error.message });
         }
     }
 );
@@ -114,8 +330,7 @@ router.get('/:id',
                 return res.status(404).json({ message: 'Session not found' });
             }
 
-            // Verify ownership
-            if (session.userId.toString() !== req.user.id) {
+            if (session.userId.toString() !== req.userId) {
                 return res.status(403).json({ message: 'Unauthorized' });
             }
 
@@ -123,42 +338,6 @@ router.get('/:id',
         } catch (error) {
             console.error('Get session error:', error);
             res.status(500).json({ message: 'Failed to fetch session' });
-        }
-    }
-);
-
-/**
- * @route   PUT /api/session/:id/state
- * @desc    Update session state (used by WebSocket handlers)
- * @access  Private
- */
-router.put('/:id/state',
-    auth,
-    param('id').isMongoId(),
-    async (req, res) => {
-        try {
-            const session = await Session.findById(req.params.id);
-
-            if (!session) {
-                return res.status(404).json({ message: 'Session not found' });
-            }
-
-            // Verify ownership
-            if (session.userId.toString() !== req.user.id) {
-                return res.status(403).json({ message: 'Unauthorized' });
-            }
-
-            // Update state fields
-            if (req.body.state) {
-                session.state = { ...session.state, ...req.body.state };
-            }
-
-            await session.save();
-
-            res.json({ message: 'Session state updated', state: session.state });
-        } catch (error) {
-            console.error('Update session state error:', error);
-            res.status(500).json({ message: 'Failed to update session state' });
         }
     }
 );
@@ -179,23 +358,30 @@ router.post('/:id/complete',
                 return res.status(404).json({ message: 'Session not found' });
             }
 
-            // Verify ownership
-            if (session.userId.toString() !== req.user.id) {
+            if (session.userId.toString() !== req.userId) {
                 return res.status(403).json({ message: 'Unauthorized' });
             }
 
             if (session.status === 'completed') {
-                return res.status(400).json({ message: 'Session already completed' });
+                // Already done — just return success so client can navigate
+                return res.json({
+                    message: 'Session already completed',
+                    sessionId: session._id,
+                    duration: session.actualDuration,
+                    tokensUsed: session.tokensUsed
+                });
             }
 
-            // Mark session as completed
             await session.complete();
 
-            // Deduct locked tokens
             if (session.tokenTransaction) {
-                await tokenService.deductTokens(session.tokenTransaction);
-                session.tokensUsed = session.tokensLocked;
-                await session.save();
+                try {
+                    await tokenService.deductTokens(session.tokenTransaction);
+                    session.tokensUsed = session.tokensLocked;
+                    await session.save();
+                } catch (err) {
+                    console.error('Token deduction error:', err.message);
+                }
             }
 
             res.json({
@@ -207,7 +393,7 @@ router.post('/:id/complete',
 
         } catch (error) {
             console.error('Complete session error:', error);
-            res.status(500).json({ message: 'Failed to complete session' });
+            res.status(500).json({ message: 'Failed to complete session', error: error.message });
         }
     }
 );
@@ -228,8 +414,7 @@ router.post('/:id/abandon',
                 return res.status(404).json({ message: 'Session not found' });
             }
 
-            // Verify ownership
-            if (session.userId.toString() !== req.user.id) {
+            if (session.userId.toString() !== req.userId) {
                 return res.status(403).json({ message: 'Unauthorized' });
             }
 
@@ -237,20 +422,19 @@ router.post('/:id/abandon',
                 return res.status(400).json({ message: 'Cannot abandon completed session' });
             }
 
-            // Mark session as abandoned
             session.status = 'abandoned';
             session.endedAt = new Date();
             await session.save();
 
-            // Release locked tokens
             if (session.tokenTransaction) {
-                await tokenService.releaseTokens(session.tokenTransaction);
+                try {
+                    await tokenService.releaseTokens(session.tokenTransaction);
+                } catch (err) {
+                    console.error('Token release error:', err.message);
+                }
             }
 
-            res.json({
-                message: 'Session abandoned, tokens refunded',
-                sessionId: session._id
-            });
+            res.json({ message: 'Session abandoned, tokens refunded', sessionId: session._id });
 
         } catch (error) {
             console.error('Abandon session error:', error);
@@ -268,8 +452,7 @@ router.get('/user/:userId',
     auth,
     async (req, res) => {
         try {
-            // Verify user can only fetch their own sessions
-            if (req.params.userId !== req.user.id) {
+            if (req.params.userId !== req.userId) {
                 return res.status(403).json({ message: 'Unauthorized' });
             }
 

@@ -11,7 +11,7 @@ const Logo = ({ className = "h-8 w-8", showText = true }) => {
       />
       {showText && (
         <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-          InterviewMate
+          Interviewmate
         </span>
       )}
     </div>

@@ -1,36 +1,30 @@
-import React, { createContext, useContext, useState, useEffect } from 'react'
+import React, { createContext, useContext } from 'react'
 
 const ThemeContext = createContext()
 
 export const useTheme = () => {
   const context = useContext(ThemeContext)
-  if (!context) {
-    throw new Error('useTheme must be used within a ThemeProvider')
-  }
+  if (!context) throw new Error('useTheme must be used within a ThemeProvider')
   return context
 }
 
+/**
+ * Aurora Silk theme — always light, no dark mode toggle.
+ * The gradient is handled by Background.jsx.
+ */
 export const ThemeProvider = ({ children }) => {
-  const [theme, setTheme] = useState(() => {
-    const savedTheme = localStorage.getItem('theme')
-    return savedTheme || 'light'
-  })
-
-  useEffect(() => {
+  // Ensure the html element never gets the 'dark' class
+  if (typeof window !== 'undefined') {
     const root = window.document.documentElement
-    root.classList.remove('light', 'dark')
-    root.classList.add(theme)
-    localStorage.setItem('theme', theme)
-  }, [theme])
-
-  const toggleTheme = () => {
-    setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light')
+    root.classList.remove('dark')
+    root.classList.add('light')
+    localStorage.setItem('theme', 'light')
   }
 
   const value = {
-    theme,
-    toggleTheme,
-    setTheme
+    theme: 'light',
+    toggleTheme: () => { }, // no-op — Aurora is always light
+    setTheme: () => { },
   }
 
   return (

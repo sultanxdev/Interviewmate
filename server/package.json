@@ -5,11 +5,10 @@
   "main": "src/index.js",
   "type": "module",
   "scripts": {
-    "dev": "nodemon src/index.js",
+    "dev": "nodemon index.js",
     "start": "node index.js"
   },
   "dependencies": {
-    "@deepgram/sdk": "^3.4.0",
     "@google/generative-ai": "^0.24.1",
     "axios": "^1.13.6",
     "bcryptjs": "^2.4.3",
@@ -28,8 +27,7 @@
     "node-fetch": "^3.3.2",
     "nodemailer": "^6.9.7",
     "openai": "^4.20.1",
-    "razorpay": "^2.9.2",
-    "socket.io": "^4.7.4"
+    "razorpay": "^2.9.2"
   },
   "devDependencies": {
     "nodemon": "^3.0.2"

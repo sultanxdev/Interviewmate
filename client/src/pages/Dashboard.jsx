@@ -57,11 +57,10 @@ const Dashboard = () => {
     s >= 80 ? 'bg-emerald-500/10 border-emerald-500/20' : s >= 60 ? 'bg-amber-500/10 border-amber-500/20' : 'bg-red-500/10 border-red-500/20'
 
   return (
-    <div className="min-h-screen flex" style={{ background: 'hsl(var(--background))' }}>
+    <div className="min-h-screen flex">
 
       {/* ─── Sidebar ─────────────────────────────────────────── */}
-      <aside className="w-64 shrink-0 flex flex-col border-r border-white/5 sticky top-0 h-screen"
-        style={{ background: 'hsl(var(--card))' }}>
+      <aside className="w-64 shrink-0 flex flex-col border-r border-white/30 sticky top-0 h-screen glass">
 
         {/* Logo */}
         <div className="px-6 py-6">
@@ -224,7 +223,7 @@ const Dashboard = () => {
           </div>
 
           {/* ── Recent sessions ── */}
-          <div className="rounded-2xl border overflow-hidden" style={{ background: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }}>
+          <div className="rounded-2xl border overflow-hidden glass" style={{ borderColor: 'rgba(255,255,255,0.5)' }}>
             <div className="px-6 py-4 border-b flex items-center justify-between" style={{ borderColor: 'hsl(var(--border))' }}>
               <h2 className="font-heading font-bold">Recent Sessions</h2>
               <Link to="/history">

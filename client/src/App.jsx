@@ -14,17 +14,24 @@ import ProfilePage from './pages/ProfilePage'
 import AnalyticsPage from './pages/AnalyticsPage'
 import SettingsPage from './pages/SettingsPage'
 import ProtectedRoute from './components/ProtectedRoute'
-
 import Background from './components/Background'
 
+// Aurora Silk gradient — used as the universal background across ALL pages
+const AURORA_BG = 'linear-gradient(150deg, #B39DDB 0%, #D1C4E9 20%, #F3E5F5 40%, #FCE4EC 60%, #FFCDD2 80%, #FFAB91 100%)'
 
 function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
         <Router>
-          <div className="min-h-screen relative">
+          {/* Root wrapper — Aurora gradient is the canvas for every page */}
+          <div
+            className="min-h-screen w-full relative"
+            style={{ background: AURORA_BG }}
+          >
+            {/* Animated depth orbs overlay */}
             <Background />
+
             <Routes>
               <Route path="/" element={<LandingPage />} />
               <Route path="/login" element={<LoginPage />} />
