@@ -21,10 +21,7 @@ Voice-first AI mock interviews that feel real, with actionable feedback to impro
 - **Students** preparing for placements.
 - **Hiring teams** using it for candidate readiness practice.
 
-## Guarantees
-- **Privacy-first**: sessions are encrypted and secure.
-- **Zero-lag experience**: websocket-based real-time architecture.
-- **Industry-aligned questions**: generated per role and current trends.
+
 
 ## Architecture
 
