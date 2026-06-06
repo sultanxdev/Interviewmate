@@ -16,10 +16,9 @@ Voice-first AI mock interviews that feel real, with actionable feedback to impro
 - **Multiple tracks**: HR, Technical, Managerial — role/company aligned.
 
 ## Target Users
-- **Job seekers** targeting top tech roles.
-- **Career switchers** validating skills in realistic scenarios.
+
 - **Students** preparing for placements.
-- **Hiring teams** using it for candidate readiness practice.
+  
 
 
 
