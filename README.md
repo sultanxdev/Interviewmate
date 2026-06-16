@@ -2,28 +2,10 @@
 
 Voice-first AI mock interviews that feel real, with actionable feedback to improve both technical and communication performance.
 
----
-
-## Live Demo
-
-- **Frontend:** https://interviewmate.sultanx.dev
-- **Backend:** https://interviewmate-api.sultanx.dev *(update this if different)*
-- **GitHub:** https://github.com/sultanxdev/interviewmate
-
----
-
 ## Screenshots
 
 ### 🖥️ Landing Page
-![Landing Page](./Docs/hero.png)
-
-### 📊 Dashboard Metrics
-![Dashboard Metrics](./Docs/dashboard.png)
-
-### 🎙️ Interview Setup & Live Session
-![Interview Setup & Live Session](./Docs/interviewpages.png)
-
----
+![Landing Page](./Docs/heroo.png)
 
 ## Overview
 
@@ -58,7 +40,13 @@ InterviewMate solves this by giving users:
 
 The important architecture decision is that the interview session and the analysis pipeline are separated. The interview stays responsive, while the AI analysis runs after the session is complete. That avoids blocking the user while the AI is thinking. 
 
----
+
+### 📊 Dashboard Metrics
+![Dashboard Metrics](./Docs/dashboard.png)
+
+### 🎙️ Interview Setup & Live Session
+![Interview Setup & Live Session](./Docs/interviewpages.png)
+
 
 ## Why This Project Matters
 
@@ -77,7 +65,6 @@ It demonstrates:
 
 That combination is especially relevant for YC-backed companies, remote startups, and AI product teams. 
 
----
 
 ## Features
 
@@ -111,8 +98,6 @@ Users can revisit past interviews, view reports, and track progress.
 ### Performance Analytics
 The dashboard shows trends and feedback across multiple sessions.
 
----
-
 ## Tech Stack
 
 ### Frontend
@@ -144,13 +129,11 @@ The dashboard shows trends and feedback across multiple sessions.
 
 This matches the actual codebase, which uses React + Vite on the frontend, Express + Mongoose on the backend, custom JWT auth, Vapi for voice sessions, and OpenRouter → Gemini for analysis. 
 
----
-
 ### Interview Processing Flow
 ![Interview Processing Flow](./Docs/interview-flow.png)
 
 **Caption:** Interview execution flow from session creation through voice interaction, transcript persistence, asynchronous AI evaluation, and final report generation.
----
+
 
 ## Core Engineering Decisions
 
@@ -174,7 +157,7 @@ The codebase uses custom JWT-based auth rather than a hosted auth provider, whic
 
 The project keeps the React frontend and Express backend as independent applications in the same codebase. That is a sensible structure for a solo-built product. 
 
----
+
 
 ## Product Flow
 
@@ -189,7 +172,7 @@ The project keeps the React frontend and Express backend as independent applicat
 9. User reviews the result in the dashboard.
 10. User checks interview history and progress.
 
----
+
 
 ## Project Structure
 
@@ -217,7 +200,7 @@ interviewmate/
 
 This matches the actual codebase layout, which includes backend route/controller/service layers and a Vite-based React frontend with pages for sign-in, interview setup, live sessions, results, and history.
 
----
+
 
 ## Main Pages
 
@@ -247,7 +230,7 @@ It gives the user a clear journey:
 
 That is the product loop.
 
----
+
 
 ## API Endpoints
 
@@ -264,7 +247,6 @@ That is the product loop.
 * `POST /api/vapi-interview/report-from-transcript`
 * `POST /api/vapi-interview/retry-analysis`
 * `GET /api/vapi-interview/user`
----
 
 ## Environment Variables
 
@@ -377,4 +359,4 @@ http://localhost:5173
 - Team dashboards
 - Subscription management
 
----
+
