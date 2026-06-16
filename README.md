@@ -1,138 +1,380 @@
-# Interviewmate
+# InterviewMate
 
-Voice-first AI mock interviews that feel real, with actionable feedback to improve technical + communication performance.
-
-## Problem
-- **Low realism → high anxiety**: candidates underperform in real interviews.
-- **Coaching is expensive**: most people can’t access quality prep.
-- **Generic feedback**: doesn’t reveal exact weak points.
-- **Peer mocks are inconsistent**: low rigor, low objectivity.
-
-## Solution (Interviewmate)
-- **Human-like interviews** using Generative AI + real-time voice.
-- **Deep follow-ups** powered by **Google Gemini**.
-- **Ultra-low latency voice** via **Deepgram (STT)** + **ElevenLabs (TTS)**.
-- **Performance analytics**: confidence, clarity, structure, technical depth.
-- **Multiple tracks**: HR, Technical, Managerial — role/company aligned.
-
-## Target Users
-- **Job seekers** targeting top tech roles.
-- **Career switchers** validating skills in realistic scenarios.
-- **Students** preparing for placements.
-- **Hiring teams** using it for candidate readiness practice.
-
-## Guarantees
-- **Privacy-first**: sessions are encrypted and secure.
-- **Zero-lag experience**: websocket-based real-time architecture.
-- **Industry-aligned questions**: generated per role and current trends.
-
-## Architecture
-
-### High-Level System Design
-```mermaid
-graph TD
-    User([User]) <-->|Websocket/MediaStream| Client[React Frontend]
-    Client <-->|Socket.io/REST| Server[Node.js Backend]
-    
-    subgraph "AI & Voice Cloud"
-        Server <-->|Gemini API| Gemini[Reasoning & Evaluation]
-        Server <-->|Deepgram SDK| STT[Speech-to-Text]
-        Server <-->|ElevenLabs SDK| TTS[Text-to-Speech]
-    end
-    
-    subgraph "Data & Auth"
-        Server --- DB[(MongoDB)]
-        Server --- Auth[Google OAuth]
-        Server --- Pay[Razorpay]
-    end
-```
-
-### End-to-End Process Flow
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant C as Client (React)
-    participant S as Server (Node.js)
-    participant AI as Gemini / ElevenLabs
-    
-    U->>C: Start Interview
-    C->>S: Init Session (Websocket)
-    S->>AI: Generate First Question
-    AI-->>S: Text Content
-    S->>AI: Text-to-Speech
-    AI-->>S: Audio Stream
-    S->>C: Push Audio + Text
-    C->>U: Play Audio
-    U->>C: Speak Response (Audio)
-    C->>S: Stream Audio
-    S->>AI: Speech-to-Text (Deepgram)
-    AI-->>S: Validated Transcript
-    S->>AI: Process & Evaluate
-    S->>U: ... repeat for all questions ...
-    S->>C: Generate Final PDF Report
-```
-
-<<<<<<< HEAD
-### ER Diagram
-```mermaid
-erDiagram
-    USER ||--o{ INTERVIEW : "starts"
-    USER ||--o{ PAYMENT : "makes"
-    USER ||--o{ TOKEN_TRANSACTION : "uses"
-    INTERVIEW ||--|| REPORT : "generates"
-    INTERVIEW ||--o{ SESSION_CHUNK : "contains"
-    
-    USER {
-        string name
-        string email
-        string subscription
-        int tokenBalance
-    }
-    INTERVIEW {
-        string role
-        string type
-        int overallScore
-        string status
-    }
-    REPORT {
-        json skillBreakdown
-        string feedback
-    }
-```
-
-## Tech Stack
-| Layer | Technologies |
-| :--- | :--- |
-| **Frontend** | React, Tailwind CSS, Framer Motion, Socket.io-client, Radix UI, Recharts |
-| **Backend** | Node.js, Express.js, Socket.io, Mongoose |
-| **AI (LLM)** | Google Gemini Pro |
-| **Voice (STT/TTS)** | Deepgram, ElevenLabs |
-| **Database** | MongoDB Atlas |
-| **Cloud/Infrastructure** | Razorpay, Google OAuth 2.0, jsPDF |
-
-## Project Structure
-```text
-interviewmate/
-├── client/                 # Frontend - React (Vite)
-│   ├── src/
-│   │   ├── components/     # UI Components (Radix, Framer)
-│   │   ├── pages/          # Interview, Dashboard, Landing
-│   │   ├── services/       # API & Socket handlers
-│   │   └── context/        # Auth & State management
-├── server/                 # Backend - Node.js
-│   ├── models/             # Mongoose Schemas (User, Interview, etc.)
-│   ├── routes/             # REST Endpoints
-│   ├── services/           # AI, STT, TTS logic
-│   ├── websocket/          # Real-time interview handlers
-│   └── middleware/         # Auth & Validation
-├── .env                    # Environment variables
-└── package.json            # Dependencies & Scripts
-```
-
-
-## 📄 License
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+Voice-first AI mock interviews that feel real, with actionable feedback to improve both technical and communication performance.
 
 ---
-*Built with ❤️ for candidates everywhere.*
 
+## Live Demo
+
+- **Frontend:** https://interviewmate.sultanx.dev
+- **Backend:** https://interviewmate-api.sultanx.dev *(update this if different)*
+- **GitHub:** https://github.com/sultanxdev/interviewmate
+
+---
+
+## Screenshots
+
+### 🖥️ Landing Page
+![Landing Page](./Docs/hero.png)
+
+### 📊 Dashboard Metrics
+![Dashboard Metrics](./Docs/dashboard.png)
+
+### 🎙️ Interview Setup & Live Session
+![Interview Setup & Live Session](./Docs/interviewpages.png)
+
+---
+
+## Overview
+
+InterviewMate is an AI-powered mock interview platform that lets users practice realistic interviews through live voice conversations, then receive structured feedback and performance analysis after the session ends.
+
+The platform is designed to solve a simple but important problem: most interview prep tools are static, generic, and disconnected from how real interviews actually feel. InterviewMate makes the experience more realistic by combining a voice-based AI interviewer, dynamic interview setup, transcript capture, and asynchronous analysis. The codebase uses a MERN architecture with custom JWT authentication, Vapi for live voice interactions, OpenRouter for LLM routing, Google Gemini for evaluation, and React 19 + Vite on the frontend.  
+
+---
+
+## Problem
+
+Interview preparation usually fails in one of three ways:
+
+- It is too shallow and only gives question lists.
+- It is too expensive to practice consistently with a human coach.
+- It gives vague feedback instead of clear, actionable improvement points.
+
+That creates a bad outcome: candidates go into interviews underprepared, anxious, and blind to their weak spots.
+
+---
+
+## Solution
+
+InterviewMate solves this by giving users:
+
+- a real-time voice interview experience
+- interview setup based on role, level, type, and context
+- live transcript capture
+- asynchronous AI evaluation after the interview ends
+- per-question feedback and overall scoring
+- interview history and progress tracking
+
+The important architecture decision is that the interview session and the analysis pipeline are separated. The interview stays responsive, while the AI analysis runs after the session is complete. That avoids blocking the user while the AI is thinking. 
+
+---
+
+## Why This Project Matters
+
+This project is strong for portfolio and hiring purposes because it shows more than just CRUD or UI work.
+
+It demonstrates:
+
+- full-stack architecture
+- real-time user flows
+- authentication and protected routes
+- asynchronous processing
+- long-running AI jobs
+- transcript handling
+- reliability and recovery thinking
+- analytics-driven product design
+
+That combination is especially relevant for YC-backed companies, remote startups, and AI product teams. 
+
+---
+
+## Features
+
+### Real-Time Voice Interview
+Users can speak to an AI interviewer in a live interview session powered by Vapi.
+
+### Dynamic Interview Setup
+Users select:
+
+- role
+- experience level
+- interview type
+- interviewer persona
+- resume or job description context
+
+### Transcript Capture
+The full conversation is streamed, normalized, and saved for later analysis.
+
+### Async AI Evaluation
+After the interview ends, the transcript is sent to OpenRouter and evaluated by Gemini models.
+
+### Multi-Model Fallback
+If one model fails or rate-limits, the system falls back to the next one.
+
+### Secure Authentication
+The app uses custom JWT auth with protected routes and session restoration.
+
+### Interview History
+Users can revisit past interviews, view reports, and track progress.
+
+### Performance Analytics
+The dashboard shows trends and feedback across multiple sessions.
+
+---
+
+## Tech Stack
+
+### Frontend
+- React 19
+- Vite
+- Tailwind CSS
+- Recharts
+
+### Backend
+- Node.js
+- Express.js
+- Mongoose
+- MongoDB
+
+### AI / Voice
+- Vapi
+- OpenRouter
+- Google Gemini
+
+### Authentication
+- Custom JWT
+- HTTP-only session handling on protected routes
+
+### Tooling
+- Docker
+- Async utilities
+- Custom error handling
+- API route organization
+
+This matches the actual codebase, which uses React + Vite on the frontend, Express + Mongoose on the backend, custom JWT auth, Vapi for voice sessions, and OpenRouter → Gemini for analysis. 
+
+---
+
+### Interview Processing Flow
+![Interview Processing Flow](./Docs/interview-flow.png)
+
+**Caption:** Interview execution flow from session creation through voice interaction, transcript persistence, asynchronous AI evaluation, and final report generation.
+---
+
+## Core Engineering Decisions
+
+### 1. Voice Interview Is Separate From Analysis
+
+The live interview must stay responsive. AI evaluation is expensive and slow, so it runs after the interview ends.
+
+### 2. Transcript Is the Source of Truth
+
+The transcript is stored and reused for report generation. That makes the analysis step deterministic and recoverable.
+
+### 3. Multi-Model Fallback Improves Reliability
+
+If one Gemini endpoint fails or rate-limits, the system can move to the next model instead of breaking the workflow.
+
+### 4. Custom JWT Keeps Auth Simple and Controlled
+
+The codebase uses custom JWT-based auth rather than a hosted auth provider, which gives you full control over route protection and session restoration.
+
+### 5. Frontend and Backend Are Cleanly Separated
+
+The project keeps the React frontend and Express backend as independent applications in the same codebase. That is a sensible structure for a solo-built product. 
+
+---
+
+## Product Flow
+
+1. User signs up or logs in.
+2. User configures an interview.
+3. User starts a live voice interview.
+4. Vapi runs the conversation.
+5. Transcript is captured and saved.
+6. Backend sends transcript to OpenRouter.
+7. Gemini generates structured feedback.
+8. Report is saved in MongoDB.
+9. User reviews the result in the dashboard.
+10. User checks interview history and progress.
+
+---
+
+## Project Structure
+
+```text
+interviewmate/
+├── backend/
+│   ├── config/
+│   ├── controllers/
+│   ├── middleware/
+│   ├── models/
+│   ├── routes/
+│   ├── services/
+│   └── utils/
+├── frontend/
+│   ├── src/
+│   │   ├── components/
+│   │   ├── context/
+│   │   ├── constants/
+│   │   ├── layout/
+│   │   └── pages/
+│   └── public/
+├── .env.example
+└── README.md
+```
+
+This matches the actual codebase layout, which includes backend route/controller/service layers and a Vite-based React frontend with pages for sign-in, interview setup, live sessions, results, and history.
+
+---
+
+## Main Pages
+
+### Public Pages
+
+* Home
+* Sign In
+* Sign Up
+
+### Authenticated Pages
+
+* Dashboard Overview
+* Create Interview
+* Interview Session
+* Interview Result
+* Past Interviews
+
+### Why this structure is good
+
+It gives the user a clear journey:
+
+* enter
+* configure
+* interview
+* analyze
+* improve
+
+That is the product loop.
+
+---
+
+## API Endpoints
+
+### Auth
+
+* `POST /api/auth/register`
+* `POST /api/auth/login`
+* `GET /api/auth/me`
+
+### Interview
+
+* `POST /api/vapi-interview/start`
+* `GET /api/vapi-interview/report/:sessionId`
+* `POST /api/vapi-interview/report-from-transcript`
+* `POST /api/vapi-interview/retry-analysis`
+* `GET /api/vapi-interview/user`
+---
+
+## Environment Variables
+
+### Backend
+
+```bash
+NODE_ENV=development
+PORT=5000
+MONGODB_URI=your_mongodb_connection_string
+JWT_SECRET=your_secure_jwt_secret
+JWT_EXPIRES_IN=7d
+VAPI_PUBLIC_KEY=your_vapi_public_key
+OPENROUTER_API_KEY=your_openrouter_api_key
+```
+
+### Frontend
+
+```bash
+VITE_BACKEND_URL=http://localhost:5000
+VITE_VAPI_PUBLIC_KEY=your_vapi_public_key
+```
+
+---
+
+## How to Run Locally
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/sultanxdev/interviewmate.git
+cd interviewmate
+```
+
+### 2. Install dependencies
+
+```bash
+cd backend && npm install
+cd ../frontend && npm install
+```
+
+### 3. Create environment files
+
+Create `.env` files in both backend and frontend using the values above.
+
+### 4. Start the backend
+
+```bash
+cd backend
+npm run dev
+```
+
+### 5. Start the frontend
+
+```bash
+cd frontend
+npm run dev
+```
+
+### 6. Open the app
+
+```bash
+http://localhost:5173
+```
+---
+
+## Challenges
+
+* Building live voice interview sessions
+* Capturing partial and final transcript updates
+* Preventing blocked UI during AI analysis
+* Handling rate limits and fallback logic
+* Designing a clean interview session lifecycle
+* Showing actionable report data instead of generic text
+* Keeping authentication and route protection stable
+
+---
+
+## Learnings
+
+* Voice AI systems need strong state management.
+* Long-running AI jobs should be decoupled from the user interaction path.
+* Transcript structure matters more than raw audio.
+* AI output is only useful when it is parsed into structured feedback.
+* Product design matters as much as model quality.
+* Good architecture makes the app easier to extend later.
+
+## Future Roadmap
+
+### Voice Infrastructure
+
+- Deepgram STT integration
+- ElevenLabs TTS integration
+- Real-time interruption handling
+
+### AI Evaluation
+
+- Resume-aware interviews
+- Company-specific interview tracks
+- Adaptive follow-up questioning
+
+### Analytics
+
+- Historical score tracking
+- Skill trend analysis
+- Personalized improvement plans
+
+### Platform
+
+- PDF report exports
+- Team dashboards
+- Subscription management
+
+---
