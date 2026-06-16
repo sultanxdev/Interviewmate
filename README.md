@@ -5,7 +5,7 @@ Voice-first AI mock interviews that feel real, with actionable feedback to impro
 ## Screenshots
 
 ### 🖥️ Landing Page
-![Landing Page](./Docs/heroo.png)
+![Landing Page](./docs/heroo.png)
 
 ## Overview
 
@@ -40,12 +40,12 @@ InterviewMate solves this by giving users:
 
 The important architecture decision is that the interview session and the analysis pipeline are separated. The interview stays responsive, while the AI analysis runs after the session is complete. That avoids blocking the user while the AI is thinking. 
 
-
+### Live link : https://interviewmate-xi.vercel.app/
 ### 📊 Dashboard Metrics
-![Dashboard Metrics](./Docs/dashboard.png)
+![Dashboard Metrics](./docs/dashboard.png)
 
 ### 🎙️ Interview Setup & Live Session
-![Interview Setup & Live Session](./Docs/interviewpages.png)
+![Interview Setup & Live Session](./docs/interviewpages.png)
 
 
 ## Why This Project Matters
