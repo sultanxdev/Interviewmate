@@ -130,7 +130,7 @@ The dashboard shows trends and feedback across multiple sessions.
 This matches the actual codebase, which uses React + Vite on the frontend, Express + Mongoose on the backend, custom JWT auth, Vapi for voice sessions, and OpenRouter → Gemini for analysis. 
 
 ### Interview Processing Flow
-![Interview Processing Flow](./Docs/interview-flow.png)
+![Interview Processing Flow](./docs/interview-flow.png)
 
 **Caption:** Interview execution flow from session creation through voice interaction, transcript persistence, asynchronous AI evaluation, and final report generation.
 
