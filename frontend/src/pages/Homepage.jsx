@@ -311,46 +311,6 @@ const Homepage = ({ backendStatus }) => {
         </div>
       </section>
 
-      {/* 4. RECRUITERS SHOWCASE */}
-      <section className="recruiters-section-premium" id="recruiters">
-        <div className="section-header-premium">
-          <h2>Meet Your Recruiter Team</h2>
-          <p>Choose an expert matching your desired industry voice, gender, and conversational flow.</p>
-        </div>
-
-        <div className="recruiters-grid-premium">
-          {interviewAgents.slice(0, 8).map((agent) => (
-            <div 
-              key={agent.name} 
-              className="recruiter-card-premium"
-              style={{ "--agent-border-color": `#${agent.bg}` }}
-            >
-              <div className="recruiter-avatar-wrapper" style={{ backgroundColor: `#${agent.bg}15` }}>
-                <span className="recruiter-avatar-initial" style={{ color: `#${agent.bg}`, borderColor: `#${agent.bg}` }}>
-                  {agent.name[0]}
-                </span>
-                <span className="gender-badge">{agent.label}</span>
-              </div>
-              <div className="recruiter-details">
-                <h3>{agent.name}</h3>
-                <span className="recruiter-meta">Synthesizer: <strong>{agent.provider}</strong></span>
-                <span className="recruiter-voice">Voice Profile: <code>{agent.voiceId.slice(0, 10)}</code></span>
-                <button 
-                  onClick={() => startSimulation(agent)} 
-                  className="btn-text-play"
-                  style={{ color: `#${agent.bg}` }}
-                >
-                  <svg fill="currentColor" viewBox="0 0 24 24" className="w-4 h-4 inline mr-1">
-                    <path d="M8 5v14l11-7z" />
-                  </svg>
-                  Simulate Call
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
       {/* 5. PROCESS WORKFLOW (HOW IT WORKS) */}
       <section className="workflow-section-premium" id="workflow">
         <div className="section-header-premium">
