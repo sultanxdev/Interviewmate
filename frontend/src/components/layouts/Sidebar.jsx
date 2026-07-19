@@ -72,7 +72,7 @@ const Sidebar = () => {
           i
         </div>
         <span className="text-white font-bold text-lg tracking-tight">
-          interMate.Ai
+          interviewmate
         </span>
       </div>
 
